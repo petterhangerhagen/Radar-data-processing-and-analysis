@@ -114,19 +114,20 @@ class ScenarioPlot(object):
     """
     A class representing a plot depicitng the tracking scenario.
     """
-    def __init__(self, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=False, add_validation_gates=False, add_track_indexes=False, gamma=3.5,filename="coord_69",dir_name="test"):
+    def __init__(self, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=False, add_validation_gates=False, add_track_indexes=False, gamma=3.5,filename="coord_69",dir_name="test",resolution=600):
         self.track_marker_size = track_marker_size
         self.measurement_marker_size = measurement_marker_size
         self.add_track_indexes = add_track_indexes
         self.add_validation_gates = add_validation_gates
         self.add_covariance_ellipses = add_covariance_ellipses
         self.gamma = gamma
+        self.resolution = resolution
         self.filename = filename.split("/")[-1].split("_")[-1].split(".")[0]
         self.dir_name = dir_name
         self.fig, self.ax = plt.subplots()
         self.ax1 = self.ax
         self.write_parameters_to_plot()
-        self.count_matrix = np.load("/home/aflaptop/Documents/radar_tracker/data/count_matrix.npy")
+        
 
     def create(self, measurements, track_history, ownship, timestamps, ground_truth=None):
         for key in ownship.keys():
@@ -166,7 +167,7 @@ class ScenarioPlot(object):
         self.ax1.grid(True)
         now_time = datetime.datetime.now().strftime("%H,%M,%S")
         save_name = f'{self.dir_name}/{self.filename}({now_time}).png'
-        self.fig.savefig(save_name,dpi=600)
+        self.fig.savefig(save_name,dpi=self.resolution)
         print(f"Saving tracker_{self.filename}.png")
         plt.close()
 
@@ -301,75 +302,6 @@ class ScenarioPlot(object):
         images_to_video_opencv('/home/aflaptop/Documents/radar_tracker/results/videos/temp', video_name, 1)
         print(f"Saving {video_name.split('/')[-1]}")
         empty_folder("/home/aflaptop/Documents/radar_tracker/results/videos/temp")
-
-    def update_count(rectangles):
-        data = {"RectangleA": 0, "RectangleB": 0, "RectangleC": 0, "RectangleD": 0, "RectangleE": 0, "RectangleF": 0}
-        for rectangle in rectangles:
-            data[rectangle] += 1
-        with open('/home/aflaptop/Documents/radar_tracker/data/count.yaml', 'w') as file:
-            yaml.dump(data, file)
-
-    def check_start_and_stop_2(self, track_history):
-        
-        #print(self.count_matrix)
-        rectangleA = RectangleA()
-        rectangleB = RectangleB()
-        rectangleC = RectangleC()
-        rectangleD = RectangleD()
-        rectangleE = RectangleE()
-        rectangleF = RectangleF()
-        rectangles = [rectangleA,rectangleB,rectangleC,rectangleD,rectangleE,rectangleF]  
-        for index, trajectory in track_history.items():
-            x_start = track_history[index][0].posterior[0][0]
-            y_start = track_history[index][0].posterior[0][2]
-            x_stop = track_history[index][-1].posterior[0][0]
-            y_stop = track_history[index][-1].posterior[0][2]
-            rectangles = []
-            for rectangle in rectangles:
-                # Start
-                if rectangle.start_or_stop(x_start,y_start):
-                    rectangles.append(rectangle)
-                    print(f"Track {index} started in rectangle {rectangle}")
-
-                # Stop
-                if rectangle.start_or_stop(x_stop,y_stop):
-                    rectangles.append(rectangle)
-                    print(f"Track {index} stopped in rectangle {rectangle}")
-
-    def check_start_and_stop(self, track_history):
-        rectangleA = RectangleA()
-        rectangleB = RectangleB()
-        rectangleC = RectangleC()
-        rectangleD = RectangleD()
-        rectangleE = RectangleE()
-        rectangleF = RectangleF()
-        rectangles = [rectangleA,rectangleB,rectangleC,rectangleD,rectangleE,rectangleF]  
-        start_rectangle = {}
-        stop_rectangle = {}
-        for index, trajectory in track_history.items():
-            x_start = track_history[index][0].posterior[0][0]
-            y_start = track_history[index][0].posterior[0][2]
-            x_stop = track_history[index][-1].posterior[0][0]
-            y_stop = track_history[index][-1].posterior[0][2]
-            for rectangle in rectangles:
-                # Start
-                if rectangle.start_or_stop(x_start,y_start):
-                    start_rectangle[index] = rectangle
-                # Stop
-                if rectangle.start_or_stop(x_stop,y_stop):
-                    stop_rectangle[index] = rectangle
-
-        for start_key in start_rectangle.keys():
-            if start_key in stop_rectangle.keys():
-                self.count_matrix[stop_rectangle[start_key].index][start_rectangle[start_key].index] += 1
-        np.save("/home/aflaptop/Documents/radar_tracker/data/count_matrix.npy",self.count_matrix)
-        # print(start_rectangle)
-        # print(stop_rectangle)
-        # print(self.count_matrix)
-
-    def reset_count_matrix(self):
-        self.count_matrix = np.zeros((6,6))
-        np.save("/home/aflaptop/Documents/radar_tracker/data/count_matrix.npy",self.count_matrix)
 
 def plot_measurements(filename,measurements_all, ax, timestamps, marker_size=5):
     cmap = get_cmap('Greys')
