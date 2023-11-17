@@ -89,11 +89,24 @@ if __name__ == '__main__':
     # Define count matrix
     count_matrix = CountMatrix(reset=True)
 
-    root = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_22-23"
-    path_list = glob.glob(os.path.join(root, '*.mat'))
+    root1 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_15-18"
+    root2 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_18-19"
+    root3 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_22-23"
+    root4 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_25-26-27"
+    root5 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_28-29-30-31"
+    root6 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_1-2-3-4-5-6-7"
+    root7 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_17-18-19-24"
+    root_list = [root1,root2,root3,root4,root5,root6,root7]
+    path_list = []
+    for root in root_list:
+        temp = glob.glob(os.path.join(root, '*.mat'))
+        path_list.extend(temp)
 
+    #path_list = glob.glob(os.path.join(root, '*.mat'))
+    print(f'Number of files: {len(path_list)}')
     for i,filename in enumerate(path_list):
         if True:
+            print(f'File number {i+1} of {len(path_list)}')
             # read out data
             measurements, ownship, timestamps = import_radar_data.radar_data_mat_file(filename)
 
@@ -124,11 +137,11 @@ if __name__ == '__main__':
                 dir_name=dir_name,
                 resolution=100
             )
-            # Video
-            if not video:
-                plot.create(measurements, manager.track_history, ownship, timestamps)
-            if video:
-                plot.create_video(measurements, manager.track_history, ownship, timestamps)
+            # Video vs image
+            # if not video:
+            #     plot.create(measurements, manager.track_history, ownship, timestamps)
+            # if video:
+            #     plot.create_video(measurements, manager.track_history, ownship, timestamps)
 
             # Check start and stop of tracks
             count_matrix.check_start_and_stop(track_history=manager.track_history)
