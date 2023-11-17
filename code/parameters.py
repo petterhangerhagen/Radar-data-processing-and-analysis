@@ -1,25 +1,29 @@
 import numpy as np
 
+tracker_state = dict()
+tracker_state["IMM_off"] = True
+tracker_state["single_target"] = False
+tracker_state["visibility_off"] = False
 
 tracker_params = dict()
-tracker_params['maximum_velocity'] = 4  # 40    # tuning [m/s] 3 m/s = 5.831 knots
+tracker_params['maximum_velocity'] = 3  # 40    # tuning [m/s] 3 m/s = 5.831 knots
 tracker_params['init_Pvel'] = 10**2             # tuning
 tracker_params['P_D'] = 0.92
 tracker_params['clutter_density'] = 5e-7
 tracker_params['gamma'] = 3.5**2
-tracker_params['survival_prob'] = 0.8 #0.999    # tuning
-tracker_params['birth_intensity'] = 1e6    #1e-7        # muligens lav en decade
+tracker_params['survival_prob'] = 0.999 #0.999    # tuning
+tracker_params['birth_intensity'] = 1e-7    #1e-7        # muligens lav en decade
 tracker_params['init_prob'] = tracker_params['P_D']*tracker_params['birth_intensity']/(tracker_params['clutter_density']+tracker_params['P_D']*tracker_params['birth_intensity'])
 tracker_params['conf_threshold'] = 0.999
-tracker_params['term_threshold'] = 0.1     #0.01
+tracker_params['term_threshold'] = 0.01     #0.01
 tracker_params['visibility_transition_matrix'] = np.array([[0.9, 0.1],[0.52, 0.48]])
 
 
 measurement_params = dict()
 measurement_params['measurement_mapping'] = np.array([[1, 0, 0, 0, 0],[0, 0, 1, 0, 0]])
-measurement_params['cart_cov'] = 6.6*np.eye(2)       #6.6**2*np.eye(2)   # tuning, litt forsiktig
-measurement_params['range_cov'] =  6**2     #8**2              # tuning
-measurement_params['bearing_cov'] = ((np.pi/180)*1)**2
+measurement_params['cart_cov'] = 6.6**2*np.eye(2)       #6.6**2*np.eye(2)   # tuning, litt forsiktig
+measurement_params['range_cov'] =  2**2     #8**2              # tuning
+measurement_params['bearing_cov'] = ((np.pi/180)*0.5)**2
 
 
 process_params = dict()

@@ -12,6 +12,9 @@ from shapely.geometry import Polygon
 from descartes import PolygonPatch
 from images_to_video import images_to_video_opencv, empty_folder
 import yaml
+import os
+import datetime
+from parameters import tracker_params, measurement_params, process_params, tracker_state
 
 # define font size, and size of plots
 matplotlib.rcParams['font.size'] = 7
@@ -111,7 +114,7 @@ class ScenarioPlot(object):
     """
     A class representing a plot depicitng the tracking scenario.
     """
-    def __init__(self, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=False, add_validation_gates=False, add_track_indexes=False, gamma=3.5,filename="coord_69",):
+    def __init__(self, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=False, add_validation_gates=False, add_track_indexes=False, gamma=3.5,filename="coord_69",dir_name="test"):
         self.track_marker_size = track_marker_size
         self.measurement_marker_size = measurement_marker_size
         self.add_track_indexes = add_track_indexes
@@ -119,44 +122,79 @@ class ScenarioPlot(object):
         self.add_covariance_ellipses = add_covariance_ellipses
         self.gamma = gamma
         self.filename = filename.split("/")[-1].split("_")[-1].split(".")[0]
+        self.dir_name = dir_name
         self.fig, self.ax = plt.subplots()
+        self.ax1 = self.ax
+        self.write_parameters_to_plot()
         self.count_matrix = np.load("/home/aflaptop/Documents/radar_tracker/data/count_matrix.npy")
 
     def create(self, measurements, track_history, ownship, timestamps, ground_truth=None):
         for key in ownship.keys():
             x_radar = ownship[key][0].posterior[0][0]
             y_radar = ownship[key][0].posterior[0][2]
-            self.ax.scatter(x_radar,y_radar,c="black",zorder=10)
-            self.ax.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10)
-        plot_measurements(self.filename,measurements, self.ax, timestamps, marker_size=self.measurement_marker_size)
+            self.ax1.scatter(x_radar,y_radar,c="black",zorder=10)
+            self.ax1.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10)
+        plot_measurements(self.filename,measurements, self.ax1, timestamps, marker_size=self.measurement_marker_size)
         if ground_truth:
-            plot_track_pos(ground_truth, self.ax, color='k', marker_size=self.track_marker_size)
+            plot_track_pos(ground_truth, self.ax1, color='k', marker_size=self.track_marker_size)
 
         plot_track_pos(
             track_history,
-            self.ax,
+            self.ax1,
             add_index=self.add_track_indexes,
             add_covariance_ellipses=self.add_covariance_ellipses,
             add_validation_gates=self.add_validation_gates,
             gamma=self.gamma)
 
         N_min, N_max, E_min, E_max = find_track_limits(track_history)
-        self.ax.set_xlim(E_min, E_max)
-        self.ax.set_ylim(N_min, N_max)
-        self.ax.set_aspect('equal')
-        self.ax.set_xlabel('East [m]')
-        self.ax.set_ylabel('North [m]')
+        try:
+            self.ax1.set_xlim(E_min, E_max)
+            self.ax1.set_ylim(N_min, N_max)
+            self.ax1.set_aspect('equal')
+            self.ax1.set_xlabel('East [m]')
+            self.ax1.set_ylabel('North [m]')
+        except Exception as e:
+            print(f"Error: {e}")
+            print(f"f{self.filename}")
 
         for key in track_history.keys():
             x_start = track_history[key][0].posterior[0][0]
             y_start = track_history[key][0].posterior[0][2]
-            self.ax.scatter(x_start,y_start,c="red",zorder=10)
-            self.ax.annotate(f"Start Track {key}",(x_start,y_start),zorder=10)
+            self.ax1.scatter(x_start,y_start,c="red",zorder=10)
+            self.ax1.annotate(f"Start Track {key}",(x_start,y_start),zorder=10)
 
-        self.ax.grid(True)
-        self.fig.savefig(f'/home/aflaptop/Documents/radar_tracker/results/tracker_{self.filename}.png',dpi=600)
+        self.ax1.grid(True)
+        now_time = datetime.datetime.now().strftime("%H,%M,%S")
+        save_name = f'{self.dir_name}/{self.filename}({now_time}).png'
+        self.fig.savefig(save_name,dpi=600)
         print(f"Saving tracker_{self.filename}.png")
         plt.close()
+
+    def write_parameters_to_plot(self):
+        my_text0= f"IMM_off: {tracker_state['IMM_off']} \n"
+        my_text1= f"Tracker parameters: \n"
+        my_text2 = f"Maximum velocity: {tracker_params['maximum_velocity']} \n"
+        my_text3 = f"Init Pvel: {np.sqrt(tracker_params['init_Pvel'])} \n"
+        my_text4 = f"P_D: {tracker_params['P_D']} \n"
+        my_text5 = f"Clutter density: {tracker_params['clutter_density']} \n"
+        my_text6 = f"Gamma: {np.sqrt(tracker_params['gamma'])} \n"
+        my_text7 = f"Survival prob: {tracker_params['survival_prob']} \n"
+        my_text8 = f"Birth intensity: {tracker_params['birth_intensity']} \n"
+        my_text9 = f"Init prob: {tracker_params['init_prob']:.4f} \n"
+        my_text10 = f"Conf threshold: {tracker_params['conf_threshold']} \n"
+        my_text11 = f"Term threshold: {tracker_params['term_threshold']} \n"
+        my_text12 = f"Cart cov: {np.sqrt(measurement_params['cart_cov'][0][0])} \n"
+        my_text13 = f"Range cov: {np.sqrt(measurement_params['range_cov'])} \n"
+        my_text14 = f"Bearing cov: {np.sqrt(measurement_params['bearing_cov']):.5f} \n"
+        my_text15 = f"Cov CV low: {np.sqrt(process_params['cov_CV_low'])} \n"
+        my_text16 = f"Cov CV high: {np.sqrt(process_params['cov_CV_high'])} \n"
+        my_text17 = f"Cov CT: {np.sqrt(process_params['cov_CT'])} \n"
+        my_text = my_text0 + my_text1 + my_text2 + my_text3 + my_text4 + my_text5 + my_text6 + my_text7 + my_text8 + my_text9 + my_text10 + my_text11 + my_text12 + my_text13 + my_text14 + my_text15 + my_text16 + my_text17
+        
+        props = dict(boxstyle='round', facecolor='grey', alpha=0.15)  # bbox features
+        font_size = 10
+        self.ax.text(1.03, 0.99, my_text, transform=self.ax.transAxes, fontsize=font_size, verticalalignment='top', bbox=props)
+        plt.tight_layout()
 
     def create_video(self, measurements, track_history, ownship, timestamps, ground_truth=None):
 
@@ -273,7 +311,7 @@ class ScenarioPlot(object):
 
     def check_start_and_stop_2(self, track_history):
         
-        print(self.count_matrix)
+        #print(self.count_matrix)
         rectangleA = RectangleA()
         rectangleB = RectangleB()
         rectangleC = RectangleC()

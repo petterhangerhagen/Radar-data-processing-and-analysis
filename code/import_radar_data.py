@@ -150,6 +150,7 @@ def radar_data_csv_file(filename):
 
     timestamps = np.array([new_timestamps])
     timestamps = np.reshape(timestamps,(len(timestamps[0]),1))
+    # print(measurements_all)
     return measurements_all, radar, timestamps
 
 def radar_data_mat_file(filename):
@@ -160,11 +161,13 @@ def radar_data_mat_file(filename):
     for i, (timestamp, measurments_set) in enumerate(mat_data.items()):
         # Skip the first three elements in the dictionary, since they are not measurements
         if i<=2: continue
-        for measurement in measurments_set:
-            #print(measurement)
+        #print(measurments_set)
+        for k,measurement in enumerate(measurments_set):
             measurements.append(set())
             measurements[-1].add(constructs.Measurement(measurement, measurement_params['cart_cov'],  float(timestamp)))
-        timestamps.append(float(timestamp))
+            # if k>0: print(measurements[-1])
+            timestamps.append(float(timestamp))
+
 
     # I want to check if the exists a timestamp that is not more than 2 seconds from the previous timestamp,
     # if so, I want to insert a new timestamp and a new empty measurment set
@@ -183,6 +186,11 @@ def radar_data_mat_file(filename):
 
     measurements = np.array(new_measeurements)
     timestamps = np.array(new_timestamps)
+    # measurements = np.array(measurements)
+    # timestamps = np.array(timestamps)
+    # for (time,measurement) in zip(timestamps,measurements):
+    #     print(f"Timestamp: {time}, Measurment: {measurement}")
+
     
     ownship = np.zeros((len(timestamps),5))
     radar = {1: [constructs.State(ownship_pos, np.identity(4), timestamp) for ownship_pos, timestamp in zip(ownship, timestamps)]}
@@ -195,9 +203,24 @@ def check_timestamp(timestamps):
     '''Helper Function for radar_data_mat_file'''
     # I want to check if the exists a timestamp that is not more than 2 seconds from the previous timestamp
     new_timestamps = timestamps.copy()
-    for i in range(len(new_timestamps)-1):
+    #for i in range(len(new_timestamps)-1):
+    counter = 0
+    i = 0
+    while i < len(new_timestamps)-1:
         if new_timestamps[i+1] - new_timestamps[i] > 2:
             #new_timestamps.insert(i+1, new_timestamps[i]+2)
             new_timestamps = np.insert(new_timestamps, i+1, new_timestamps[i]+2)
-            print(f"Inserted new timestamp, {new_timestamps[i]+2}")
+            #print(f"Inserted new timestamp, {new_timestamps[i]+2}")
+            counter += 1
+        i += 1
+    print(f"Inserted {counter} new timestamps")
+    # new_timestamps = timestamps.copy()
+    # #for i in range(len(new_timestamps)-1):
+    # i = 0
+    # while i < len(new_timestamps)-1:
+    #     if new_timestamps[i+1] - new_timestamps[i] > 1:
+    #         #new_timestamps.insert(i+1, new_timestamps[i]+2)
+    #         new_timestamps = np.insert(new_timestamps, i+1, new_timestamps[i]+1)
+    #         print(f"Inserted new timestamp, {new_timestamps[i]+2}")
+    #     i += 1
     return new_timestamps

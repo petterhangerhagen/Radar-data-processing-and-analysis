@@ -130,10 +130,13 @@ class CVModel(KinematicModel):
         diagonal = (F_block,)*int(self.__dimension__/2) + (1,)*int(self.__dimension__%2)
         F = block_diag(*diagonal)
         mean = state.mean
+        #print(mean[-1])
+        # print(len(F.dot(mean)))
         return F.dot(mean), F
 
     def __get_Q_matrix__(self, dt, **kwargs):
         Q_block = np.array([[dt**4/4, dt**3/2],[dt**3/2, dt**2]])*self.__state_transition_covariance__
+        # print(Q_block)
         diagonal = (Q_block,)*int(self.__dimension__/2) + (0,)*int(self.__dimension__%2)
         return block_diag(*diagonal)
 
