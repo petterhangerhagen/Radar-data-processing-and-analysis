@@ -89,23 +89,31 @@ if __name__ == '__main__':
     # Define count matrix
     count_matrix = CountMatrix(reset=True)
 
-    root1 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_15-18"
-    root2 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_18-19"
-    root3 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_22-23"
-    root4 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_25-26-27"
-    root5 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_28-29-30-31"
-    root6 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_1-2-3-4-5-6-7"
-    root7 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_17-18-19-24"
-    root_list = [root1,root2,root3,root4,root5,root6,root7]
-    path_list = []
-    for root in root_list:
-        temp = glob.glob(os.path.join(root, '*.mat'))
-        path_list.extend(temp)
+    all_data = True
+    # Import data
+    if all_data:
+        root1 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_15-18"
+        root2 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_18-19"
+        root3 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_22-23"
+        root4 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_25-26-27"
+        root5 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_28-29-30-31"
+        root6 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_1-2-3-4-5-6-7"
+        root7 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_8-9-11-14"
+        root8 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_17-18-19-24"
+        root_list = [root1,root2,root3,root4,root5,root6,root7,root8]
+        path_list = []
+        for root in root_list:
+            temp = glob.glob(os.path.join(root, '*.mat'))
+            path_list.extend(temp)
+    else:
+        path_list = ["/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_8-9-11-14/rosbag_2023-09-08-18-10-43.mat"]
 
-    #path_list = glob.glob(os.path.join(root, '*.mat'))
-    print(f'Number of files: {len(path_list)}')
+    # root = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_8-9-11-14"
+    # temp = glob.glob(os.path.join(root, '*.mat'))
+    # path_list.extend(temp)
+
     for i,filename in enumerate(path_list):
-        if True:
+        if i<10:
             print(f'File number {i+1} of {len(path_list)}')
             # read out data
             measurements, ownship, timestamps = import_radar_data.radar_data_mat_file(filename)
@@ -144,4 +152,9 @@ if __name__ == '__main__':
             #     plot.create_video(measurements, manager.track_history, ownship, timestamps)
 
             # Check start and stop of tracks
-            count_matrix.check_start_and_stop(track_history=manager.track_history)
+            count_matrix.check_start_and_stop(track_history=manager.track_history,filename=filename)
+
+    unvalidated_tracks = {"Number of tracks": count_matrix.number_of_tracks,"Unvalidated tracks": count_matrix.unvalidated_track}
+    np.save("/home/aflaptop/Documents/radar_tracker/data/unvalidated_tracks.npy",unvalidated_tracks)
+    files_with_tracks_on_diagonal = {"Number of tracks on diagonal":count_matrix.number_of_tracks_on_diagonal,"Files":count_matrix.files_with_tracks_on_diagonal}
+    np.save("/home/aflaptop/Documents/radar_tracker/data/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)

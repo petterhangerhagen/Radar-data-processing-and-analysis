@@ -9,7 +9,7 @@ Description:
 import numpy as np
 
 class RectangleA:
-    def __init__(self, bottom_left=[-80,-10], top_right=[-30,40]):
+    def __init__(self, bottom_left=[-120,-40], top_right=[-30,60]): # earlier [-120,-40], [-30,40]
         self.bottom_left = bottom_left
         self.top_right = top_right
         self.index = 0
@@ -24,7 +24,7 @@ class RectangleA:
             return False
 
 class RectangleB:
-    def __init__(self, bottom_left=[10,0], top_right=[50,30]):
+    def __init__(self, bottom_left=[0,0], top_right=[50,30]):
         self.bottom_left = bottom_left
         self.top_right = top_right
         self.index = 1
@@ -104,9 +104,14 @@ class CountMatrix:
         self.file_name = "/home/aflaptop/Documents/radar_tracker/data/count_matrix.npy"
         self.count_matrix = np.load(self.file_name)
         if reset:
-            self.reset_count_matrix()
+            print("Resetting count matrix")
+            self.count_matrix = np.zeros((6,6))
+        self.unvalidated_track = 0
+        self.number_of_tracks = 0
+        self.number_of_tracks_on_diagonal = 0
+        self.files_with_tracks_on_diagonal = []
         
-    def check_start_and_stop(self,track_history):
+    def check_start_and_stop(self,track_history,filename=None):
         rectangleA = RectangleA()
         rectangleB = RectangleB()
         rectangleC = RectangleC()
@@ -117,6 +122,7 @@ class CountMatrix:
         start_rectangle = {}
         stop_rectangle = {}
         for index, trajectory in track_history.items():
+            self.number_of_tracks += 1
             x_start = track_history[index][0].posterior[0][0]
             y_start = track_history[index][0].posterior[0][2]
             x_stop = track_history[index][-1].posterior[0][0]
@@ -128,15 +134,16 @@ class CountMatrix:
                 # Stop
                 if rectangle.start_or_stop(x_stop,y_stop):
                     stop_rectangle[index] = rectangle
-
+            
+            if index not in start_rectangle.keys() or index not in stop_rectangle.keys():
+                self.unvalidated_track += 1
+            
+        
         for start_key in start_rectangle.keys():
             if start_key in stop_rectangle.keys():
-                self.count_matrix[stop_rectangle[start_key].index][start_rectangle[start_key].index] += 1
+                self.count_matrix[start_rectangle[start_key].index][stop_rectangle[start_key].index] += 1
+                if start_rectangle[start_key].index == stop_rectangle[start_key].index:
+                    self.number_of_tracks_on_diagonal += 1
+                    self.files_with_tracks_on_diagonal.append(filename.split("/")[-1])
 
         np.save(self.file_name, self.count_matrix)
-
-
-    def reset_count_matrix(self):
-        zero_matrix = np.zeros((6,6))
-        print("Resetting matrix")
-        np.save(self.file_name,zero_matrix)
