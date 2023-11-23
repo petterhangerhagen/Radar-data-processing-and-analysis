@@ -20,96 +20,6 @@ from parameters import tracker_params, measurement_params, process_params, track
 matplotlib.rcParams['font.size'] = 7
 matplotlib.rcParams['figure.figsize'] = 7.16666, 7.166666
 
-class RectangleA:
-    def __init__(self, bottom_left=[-80,-10], top_right=[-30,40]):
-        self.bottom_left = bottom_left
-        self.top_right = top_right
-        self.index = 0
-
-    def __repr__(self):
-        return f"RectangleA"
-
-    def start_or_stop(self,x,y):
-        if self.bottom_left[0] < x < self.top_right[0] and self.bottom_left[1] < y < self.top_right[1]:
-            return True
-        else:
-            return False
-
-class RectangleB:
-    def __init__(self, bottom_left=[10,0], top_right=[50,30]):
-        self.bottom_left = bottom_left
-        self.top_right = top_right
-        self.index = 1
-
-    def __repr__(self):
-        return f"RectangleB"
-
-    def start_or_stop(self,x,y):
-        if self.bottom_left[0] < x < self.top_right[0] and self.bottom_left[1] < y < self.top_right[1]:
-            return True
-        else:
-            return False
-
-class RectangleC:
-    def __init__(self, bottom_left=[40,60], top_right=[100,120]):
-        self.bottom_left = bottom_left
-        self.top_right = top_right
-        self.index = 2
-
-    def __repr__(self):
-        return f"RectangleC"
-
-    def start_or_stop(self,x,y):
-        if self.bottom_left[0] < x < self.top_right[0] and self.bottom_left[1] < y < self.top_right[1]:
-            return True
-        else:
-            return False
-
-class RectangleD:
-    def __init__(self, bottom_left=[-10,80], top_right=[40,120]):
-        self.bottom_left = bottom_left
-        self.top_right = top_right
-        self.index = 3
-
-    def __repr__(self):
-        return f"RectangleD"
-
-    def start_or_stop(self,x,y):
-        if self.bottom_left[0] < x < self.top_right[0] and self.bottom_left[1] < y < self.top_right[1]:
-            return True
-        else:
-            return False
-
-class RectangleE:
-    def __init__(self, bottom_left=[30,40], top_right=[60,60]):
-        self.bottom_left = bottom_left
-        self.top_right = top_right
-        self.index = 4
-
-    def __repr__(self):
-        return f"RectangleE"
-
-    def start_or_stop(self,x,y):
-        if self.bottom_left[0] < x < self.top_right[0] and self.bottom_left[1] < y < self.top_right[1]:
-            return True
-        else:
-            return False
-
-class RectangleF:
-    def __init__(self, bottom_left=[-30,-10], top_right=[0,10]):
-        self.bottom_left = bottom_left
-        self.top_right = top_right
-        self.index = 5
-
-    def __repr__(self):
-            return f"RectangleF"
-
-    def start_or_stop(self,x,y):
-        if self.bottom_left[0] < x < self.top_right[0] and self.bottom_left[1] < y < self.top_right[1]:
-            return True
-        else:
-            return False
-
 class ScenarioPlot(object):
     """
     A class representing a plot depicitng the tracking scenario.
@@ -168,7 +78,7 @@ class ScenarioPlot(object):
         now_time = datetime.datetime.now().strftime("%H,%M,%S")
         save_name = f'{self.dir_name}/{self.filename}({now_time}).png'
         self.fig.savefig(save_name,dpi=self.resolution)
-        print(f"Saving tracker_{self.filename}.png")
+        print(f"Saving tracker_{save_name}")
         plt.close()
 
     def write_parameters_to_plot(self):
@@ -295,13 +205,14 @@ class ScenarioPlot(object):
                                     self.ax.add_patch(PolygonPatch(covariance_ellipse, facecolor = facecolor, edgecolor = edgecolor))
 
                 self.ax.set_title(f"Time: {timestamp[0]}")
-                self.fig.savefig(f'/home/aflaptop/Documents/radar_tracker/results/videos/temp/tracker_{i+1}.png',dpi=100)
+                self.fig.savefig(f'/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp/tracker_{i+1}.png',dpi=100)
                 bar.update(i)
 
-        video_name = f'/home/aflaptop/Documents/radar_tracker/results/videos/{self.filename}.avi'
-        images_to_video_opencv('/home/aflaptop/Documents/radar_tracker/results/videos/temp', video_name, 1)
+        photos_file_path = "/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp"
+        video_name = f'{photos_file_path[:-4]}{self.filename}.avi'
+        images_to_video_opencv(photos_file_path, video_name, fps=10)
         print(f"Saving {video_name.split('/')[-1]}")
-        empty_folder("/home/aflaptop/Documents/radar_tracker/results/videos/temp")
+        empty_folder(photos_file_path)
 
 def plot_measurements(filename,measurements_all, ax, timestamps, marker_size=5):
     cmap = get_cmap('Greys')
@@ -402,51 +313,3 @@ def find_track_limits(track_history, extra_spacing=50):
     E_min -= extra_spacing
     E_max += extra_spacing
     return N_min, N_max, E_min, E_max
-
-def old_shit():
-    print("hehe")
-    # for index, trajectory in track_history.items():
-                    #     if self.add_covariance_ellipses:
-                    #         ellipse_center = []
-                    #         ellipse_sigma = []
-                    #         for track in trajectory:
-                    #             if track.timestamp < measurement_timestamp:
-                    #                 ellipse_center.append(track.posterior[0][0:3:2])
-                    #                 ellipse_sigma.append(track.posterior[1][0:3:2,0:3:2])
-                    #             else:
-                    #                 break
-                    #         if ellipse_center:
-                    #             edgecolor = matplotlib.colors.colorConverter.to_rgba(selected_color, alpha=0)
-                    #             facecolor = matplotlib.colors.colorConverter.to_rgba(selected_color, alpha=0.16)
-                    #             for i in range(len(ellipse_center)):
-                    #                 covariance_ellipse = get_ellipse(ellipse_center[i], ellipse_sigma[i])
-                    #                 self.ax.add_patch(PolygonPatch(covariance_ellipse, facecolor = facecolor, edgecolor = edgecolor))
-
-                            # try:
-                            #     #print(trajectory[i].posterior[0][0:3:2])
-                            #     print((trajectory[i]))
-                            #     covariance_ellipse = get_ellipse(trajectory[i].posterior[0], trajectory[i].posterior[1][0:3:2,0:3:2])
-                            #     #covariance_ellipse = get_ellipse(track_pos[0:3:2], trajectory[i].posterior[1][0:3:2,0:3:2])
-                            #     self.ax.add_patch(PolygonPatch(covariance_ellipse, facecolor = facecolor, edgecolor = edgecolor))
-                            # except Exception as e:
-                            #     print(e)
-                        # for track in trajectory:
-                        #     print(track)
-                        #     print("########################")
-                        # print("-----------------------------------------")
-
-                        # positions2 = np.array([track.posterior[0] for track in trajectory])
-                        # line, = self.ax.plot(positions2[:i,0], positions2[:i,2], color=selected_color, lw=1,ls="-")
-                        # if i == len(measurements) - 1:
-                        #     last_position, = self.ax.plot(positions2[-1,0], positions2[-1,2], 'o', color=selected_color, markersize=self.measurement_marker_size)
-
-                        # if self.add_covariance_ellipses:
-                        #     edgecolor = matplotlib.colors.colorConverter.to_rgba(selected_color, alpha=0)
-                        #     facecolor = matplotlib.colors.colorConverter.to_rgba(selected_color, alpha=0.16)
-                        #     #for track in list(trajectory[i]):
-                        #     #print(trajectory[i])
-                        #     try:
-                        #         covariance_ellipse = get_ellipse(center=trajectory[i].posterior[0][0:3:2], Sigma=trajectory[i].posterior[1][0:3:2,0:3:2])
-                        #         self.ax.add_patch(PolygonPatch(covariance_ellipse, facecolor = facecolor, edgecolor = edgecolor))
-                        #     except Exception as e:
-                        #         print(f"Exception: {e}")

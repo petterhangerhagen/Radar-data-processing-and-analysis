@@ -5,6 +5,7 @@ from check_start_and_stop import CountMatrix
 import import_data
 import import_radar_data
 import plotting
+import video
 import numpy as np
 import os
 import glob
@@ -84,12 +85,12 @@ if __name__ == '__main__':
     IMM_off = tracker_state["IMM_off"]
     single_target = tracker_state["single_target"]
     visibility_off = tracker_state["visibility_off"]
-    video = False
+    video_statement = False
 
     # Define count matrix
     count_matrix = CountMatrix(reset=True)
 
-    all_data = True
+    all_data = False
     # Import data
     if all_data:
         root1 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_15-18"
@@ -106,14 +107,13 @@ if __name__ == '__main__':
             temp = glob.glob(os.path.join(root, '*.mat'))
             path_list.extend(temp)
     else:
-        path_list = ["/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_8-9-11-14/rosbag_2023-09-08-18-10-43.mat"]
+        path_list = ["/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_8-9-11-14/rosbag_2023-09-09-14-06-49.mat"]
+        #path_list = ["/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_1-2-3-4-5-6-7/rosbag_2023-09-07-14-30-55.mat"]
+        #path_list = ["/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_8-9-11-14/rosbag_2023-09-09-10-37-00.mat"]
 
-    # root = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_8-9-11-14"
-    # temp = glob.glob(os.path.join(root, '*.mat'))
-    # path_list.extend(temp)
 
     for i,filename in enumerate(path_list):
-        if i<10:
+        if True:
             print(f'File number {i+1} of {len(path_list)}')
             # read out data
             measurements, ownship, timestamps = import_radar_data.radar_data_mat_file(filename)
@@ -132,29 +132,21 @@ if __name__ == '__main__':
                 manager.step(measurement_set, float(timestamp), ownship=radar)
                 #print(f'Active tracks: {np.sort([track.index for track in manager.tracks])}\n')
 
-
-            # plotting
-            plot = plotting.ScenarioPlot(
-                measurement_marker_size=3,
-                track_marker_size=5,
-                add_covariance_ellipses=True,
-                add_validation_gates=False,
-                add_track_indexes=False,
-                gamma=3.5,
-                filename=filename,
-                dir_name=dir_name,
-                resolution=100
-            )
             # Video vs image
-            # if not video:
-            #     plot.create(measurements, manager.track_history, ownship, timestamps)
-            # if video:
-            #     plot.create_video(measurements, manager.track_history, ownship, timestamps)
+            if not video_statement:
+                # plotting
+                plot = plotting.ScenarioPlot(measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=600)
+                plot.create(measurements, manager.track_history, ownship, timestamps)
+            if video_statement:
+                video_manager = video.Video(add_covariance_ellipses=True, gamma=1, filename=filename, dir_name=dir_name, resolution=400,fps=1)
+                video_manager.create_video(measurements, manager.track_history, ownship, timestamps)
 
-            # Check start and stop of tracks
-            count_matrix.check_start_and_stop(track_history=manager.track_history,filename=filename)
+            if not video_statement:
+                # Check start and stop of tracks
+                count_matrix.check_start_and_stop(track_history=manager.track_history,filename=filename)
 
-    unvalidated_tracks = {"Number of tracks": count_matrix.number_of_tracks,"Unvalidated tracks": count_matrix.unvalidated_track}
-    np.save("/home/aflaptop/Documents/radar_tracker/data/unvalidated_tracks.npy",unvalidated_tracks)
-    files_with_tracks_on_diagonal = {"Number of tracks on diagonal":count_matrix.number_of_tracks_on_diagonal,"Files":count_matrix.files_with_tracks_on_diagonal}
-    np.save("/home/aflaptop/Documents/radar_tracker/data/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
+    if not video_statement:
+        unvalidated_tracks = {"Number of tracks": count_matrix.number_of_tracks,"Unvalidated tracks": count_matrix.unvalidated_track}
+        np.save("/home/aflaptop/Documents/radar_tracker/data/unvalidated_tracks.npy",unvalidated_tracks)
+        files_with_tracks_on_diagonal = {"Number of tracks on diagonal":count_matrix.number_of_tracks_on_diagonal,"Files":count_matrix.files_with_tracks_on_diagonal}
+        np.save("/home/aflaptop/Documents/radar_tracker/data/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
