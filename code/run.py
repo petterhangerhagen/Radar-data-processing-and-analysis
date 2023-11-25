@@ -73,6 +73,29 @@ def make_new_directory():
         os.mkdir(path)
     return path
 
+def read_out_txt_file(root):
+    txt_file = glob.glob(os.path.join(root, '*.txt'))
+    timestamps = []
+    with open(txt_file[0], 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            timestamps.append(line.split()[0])
+    return timestamps        
+
+def remove_files(root,path_list):
+    files_to_be_skipped = read_out_txt_file(root)
+    counter = 0
+    path_list_copy = path_list.copy()
+    for file in path_list_copy:
+        date_of_file = file.split('/')[-1].split('.')[0].split('_')[-1]
+        for timestamp in files_to_be_skipped:
+            if date_of_file == timestamp:
+                path_list.remove(file)
+                counter += 1
+
+    print(f"Removed {counter} files of {len(files_to_be_skipped)} files given by the txt file")
+   
+
 if __name__ == '__main__':
     """
     All tracker parameters are imported from parameters.py, and can be changed
@@ -86,13 +109,15 @@ if __name__ == '__main__':
     single_target = tracker_state["single_target"]
     visibility_off = tracker_state["visibility_off"]
     video_statement = False
+    counting_matrix = True
 
     # Define count matrix
-    count_matrix = CountMatrix(reset=True)
+    if counting_matrix:
+        count_matrix = CountMatrix(reset=True)
 
-    all_data = False
+    scenario_selector = 1
     # Import data
-    if all_data:
+    if scenario_selector == 0:
         root1 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_15-18"
         root2 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_18-19"
         root3 = "/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_aug_22-23"
@@ -106,8 +131,23 @@ if __name__ == '__main__':
         for root in root_list:
             temp = glob.glob(os.path.join(root, '*.mat'))
             path_list.extend(temp)
+
+    elif scenario_selector == 1:
+        root1 = "/home/aflaptop/Documents/data_mradmin/processed_data2/rosbag_markerArray_data_aug_28-29-30-31"
+        root2 = "/home/aflaptop/Documents/data_mradmin/processed_data2/rosbag_markerArray_data_sep_1-2-3-4-5-6-7"
+        root3 = "/home/aflaptop/Documents/data_mradmin/processed_data2/rosbag_markerArray_data_sep_8-9-11-14"
+        root4 = "/home/aflaptop/Documents/data_mradmin/processed_data2/rosbag_markerArray_data_sep_17-18-19-24"
+        root_list = [root1,root2,root3,root4]
+        path_list = []
+        for root in root_list:
+            temp = glob.glob(os.path.join(root, '*.mat'))
+            remove_files(root,temp)
+            path_list.extend(temp)
+        
     else:
         path_list = ["/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_8-9-11-14/rosbag_2023-09-09-14-06-49.mat"]
+        path_list = ["/home/aflaptop/Documents/data_mradmin/remove_multipath/rosbag_2023-09-09-11-41-54.mat"]
+        #path_list = ["/home/aflaptop/Documents/data_mradmin/remove_multipath/converted_data.mat"]
         #path_list = ["/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_1-2-3-4-5-6-7/rosbag_2023-09-07-14-30-55.mat"]
         #path_list = ["/home/aflaptop/Documents/data_mradmin/processed_data/rosbag_markerArray_data_sep_8-9-11-14/rosbag_2023-09-09-10-37-00.mat"]
 
@@ -133,15 +173,15 @@ if __name__ == '__main__':
                 #print(f'Active tracks: {np.sort([track.index for track in manager.tracks])}\n')
 
             # Video vs image
-            if not video_statement:
+            if False:   #not video_statement:
                 # plotting
-                plot = plotting.ScenarioPlot(measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=600)
+                plot = plotting.ScenarioPlot(measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=100)
                 plot.create(measurements, manager.track_history, ownship, timestamps)
             if video_statement:
                 video_manager = video.Video(add_covariance_ellipses=True, gamma=1, filename=filename, dir_name=dir_name, resolution=400,fps=1)
                 video_manager.create_video(measurements, manager.track_history, ownship, timestamps)
 
-            if not video_statement:
+            if counting_matrix:
                 # Check start and stop of tracks
                 count_matrix.check_start_and_stop(track_history=manager.track_history,filename=filename)
 

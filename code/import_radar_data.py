@@ -155,7 +155,6 @@ def radar_data_csv_file(filename):
 
 def radar_data_mat_file(filename):
     mat_data = io.loadmat(filename)
-
     measurements = []
     timestamps = []
     for i, (timestamp, measurments_set) in enumerate(mat_data.items()):
