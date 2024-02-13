@@ -109,6 +109,8 @@ class Track(object):
     def __repr__(self):
         mean, cov = self.posterior
         return f'Track {self.index}: [{mean[0]:5.2f}, {mean[2]:5.2f}], r = {self.existence_probability:.3f}'
+        #return f'Track {self.index}: [{mean[0]:5.2f}, {mean[2]:5.2f}], r = {self.existence_probability:.3f}, t = {self.timestamp}'
+
 
 
     """
@@ -292,7 +294,8 @@ class Measurement(State):
         return hash((self.mean[0], self.mean[1], self.timestamp))
 
     def __repr__(self):
-        return f'Measurement: [{self.mean[0]}, {self.mean[1]}]'
+        # return f'Measurement: [{self.mean[0]}, {self.mean[1]}]'
+        return f'Measurement: [{self.mean[0]}, {self.mean[1]}, {self.timestamp}]'
 
     @property
     def value(self):

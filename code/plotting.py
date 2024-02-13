@@ -34,18 +34,35 @@ class ScenarioPlot(object):
         self.resolution = resolution
         self.filename = filename.split("/")[-1].split("_")[-1].split(".")[0]
         self.dir_name = dir_name
-        self.fig, self.ax = plt.subplots()
+        self.fig, self.ax = plt.subplots(figsize=(10, 7.166666))
         self.ax1 = self.ax
         self.write_parameters_to_plot()
         
 
     def create(self, measurements, track_history, ownship, timestamps, ground_truth=None):
+        # Plotting the occupancy grid'
+        #data = np.load("/home/aflaptop/Documents/radar_tracker/data/occupancy_grid.npy",allow_pickle='TRUE').item()
+        #occupancy_grid = data["occupancy_grid"]
+        #origin_x = data["origin_x"]
+        #origin_y = data["origin_y"]
+        #self.ax1.imshow(occupancy_grid, cmap='binary', interpolation='none', origin='upper', extent=[0, occupancy_grid.shape[1], 0, occupancy_grid.shape[0]])
+        #plt.show()
+        # for measurement in measurements:
+        #     for meas in measurement:
+        #         meas.value[0] = meas.value[0] #+ origin_x
+        #         meas.value[1] = meas.value[1] #+ origin_y
+
+        self.write_track_time_to_plot(track_history)
+        self.write_coherence_factor_to_plot(track_history)
+
         for key in ownship.keys():
-            x_radar = ownship[key][0].posterior[0][0]
-            y_radar = ownship[key][0].posterior[0][2]
+            x_radar = ownship[key][0].posterior[0][0] #+ origin_x
+            y_radar = ownship[key][0].posterior[0][2] #+ origin_y
             self.ax1.scatter(x_radar,y_radar,c="black",zorder=10)
             self.ax1.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10)
+            
         plot_measurements(self.filename,measurements, self.ax1, timestamps, marker_size=self.measurement_marker_size)
+        
         if ground_truth:
             plot_track_pos(ground_truth, self.ax1, color='k', marker_size=self.track_marker_size)
 
@@ -57,16 +74,13 @@ class ScenarioPlot(object):
             add_validation_gates=self.add_validation_gates,
             gamma=self.gamma)
 
-        N_min, N_max, E_min, E_max = find_track_limits(track_history)
-        try:
-            self.ax1.set_xlim(E_min, E_max)
-            self.ax1.set_ylim(N_min, N_max)
-            self.ax1.set_aspect('equal')
-            self.ax1.set_xlabel('East [m]')
-            self.ax1.set_ylabel('North [m]')
-        except Exception as e:
-            print(f"Error: {e}")
-            print(f"f{self.filename}")
+        #N_min, N_max, E_min, E_max = find_track_limits(track_history)
+        self.ax1.set_xlim(-120, 120)
+        self.ax1.set_ylim(-140, 20)
+        self.ax1.set_aspect('equal')
+        self.ax1.set_xlabel('East [m]')
+        self.ax1.set_ylabel('North [m]')
+        plt.tight_layout()
 
         for key in track_history.keys():
             x_start = track_history[key][0].posterior[0][0]
@@ -80,6 +94,52 @@ class ScenarioPlot(object):
         self.fig.savefig(save_name,dpi=self.resolution)
         print(f"Saving tracker_{save_name}")
         plt.close()
+
+    def write_track_time_to_plot(self, track_history):
+        text = ""
+        for i,track in enumerate(track_history.items()):
+            track_id = track[0]
+            track_start_time = track[1][0].timestamp
+            track_end_time = track[1][-1].timestamp
+            track_time = track_end_time - track_start_time
+            text += f"Track {track_id} time: {track_time:.2f}"
+            if i < len(track_history.items()) - 1:
+                text += "\n"
+
+        self.ax.text(0.0, -0.13, text, transform=self.ax.transAxes, fontsize=10, verticalalignment='top', bbox=dict(boxstyle='round', facecolor='grey', alpha=0.15))
+
+    def write_coherence_factor_to_plot(self, track_history,coherence_factor=0.75):
+        text = "Coherence factor for tracks:\n"
+        for i,track in enumerate(track_history.items()):
+            u = []
+            v = []
+            last_mean, cov = track[1][0].posterior
+            for k,track_point in enumerate(track[1]):
+                if k == 0:
+                    continue
+                mean, cov = track_point.posterior
+                u.append([[mean[0]-last_mean[0]],[mean[2]-last_mean[2]]])
+                v.append([mean[1],mean[3]])
+                last_mean = mean
+            u = np.array(u)
+            v = np.array(v)
+
+            ck = 0
+            for k in range(1,len(u)):
+                c_k = np.dot(np.transpose(v[k]),u[k])/(np.linalg.norm(u[k])*np.linalg.norm(v[k]))
+                ck += c_k[0]
+            text += f"Track {track[0]} = {ck/len(u):.2f}"
+
+            if i < len(track_history.items()) - 1:
+                text += "\n"
+
+        self.ax.text(0.3, -0.13, text, transform=self.ax.transAxes, fontsize=10, verticalalignment='top', bbox=dict(boxstyle='round', facecolor='grey', alpha=0.15))
+            #print(f"Coherence factor for track {track[0]} = {ck/len(u):.2f}\n")
+            #if ck/len(u) < coherence_factor:
+            #    not_valid_tracks.append(track[0])
+
+        #print(f"Tracks with to low coherence factor: {not_valid_tracks}\n")
+        #return not_valid_tracks
 
     def write_parameters_to_plot(self):
         my_text0= f"IMM_off: {tracker_state['IMM_off']} \n"
@@ -97,15 +157,14 @@ class ScenarioPlot(object):
         my_text12 = f"Cart cov: {np.sqrt(measurement_params['cart_cov'][0][0])} \n"
         my_text13 = f"Range cov: {np.sqrt(measurement_params['range_cov'])} \n"
         my_text14 = f"Bearing cov: {np.sqrt(measurement_params['bearing_cov']):.5f} \n"
-        my_text15 = f"Cov CV low: {np.sqrt(process_params['cov_CV_low'])} \n"
-        my_text16 = f"Cov CV high: {np.sqrt(process_params['cov_CV_high'])} \n"
-        my_text17 = f"Cov CT: {np.sqrt(process_params['cov_CT'])} \n"
-        my_text = my_text0 + my_text1 + my_text2 + my_text3 + my_text4 + my_text5 + my_text6 + my_text7 + my_text8 + my_text9 + my_text10 + my_text11 + my_text12 + my_text13 + my_text14 + my_text15 + my_text16 + my_text17
+        my_text15 = f"Cov CV single: {np.sqrt(process_params['cov_CV_single'])}"
+        #my_text16 = f"Cov CV high: {np.sqrt(process_params['cov_CV_high'])} \n"
+        #my_text17 = f"Cov CT: {np.sqrt(process_params['cov_CT'])} \n"
+        my_text = my_text0 + my_text1 + my_text2 + my_text3 + my_text4 + my_text5 + my_text6 + my_text7 + my_text8 + my_text9 + my_text10 + my_text11 + my_text12 + my_text13 + my_text14 + my_text15 #+ my_text16 + my_text17
         
         props = dict(boxstyle='round', facecolor='grey', alpha=0.15)  # bbox features
         font_size = 10
         self.ax.text(1.03, 0.99, my_text, transform=self.ax.transAxes, fontsize=font_size, verticalalignment='top', bbox=props)
-        plt.tight_layout()
 
     def create_video(self, measurements, track_history, ownship, timestamps, ground_truth=None):
 
@@ -230,7 +289,7 @@ def plot_measurements(filename,measurements_all, ax, timestamps, marker_size=5):
 
 def plot_track_pos(track_history, ax, add_index=False, add_covariance_ellipses=False, add_validation_gates=False, gamma=3.5, lw=1, ls='-', marker_size = 5, color=None,):
     color_idx = 0
-    colors = ['#ff7f0e', '#1f77b4', '#2ca02c','#c73838','#c738c0'] # Orange, blå, grønn, rød, rosa
+    colors = ['#ff7f0e', '#1f77b4', '#2ca02c','#c73838','#c738c0',"#33A8FF",'#DBFF33','#33FFBD','#FFBD33',] # Orange, blå, grønn, rød, rosa,blå, gul/grønn, turkis, gul
     #colors = ['#ff7f0e', '#1f77b4', '#2ca02c']
     for index, trajectory in track_history.items():
         if len(trajectory) == 0:
@@ -241,7 +300,7 @@ def plot_track_pos(track_history, ax, add_index=False, add_covariance_ellipses=F
         if color is not None:
             selected_color = color
         else:
-            selected_color = colors[color_idx%5] # colors[color_idx%3]
+            selected_color = colors[color_idx%len(colors)] # colors[color_idx%3]
             color_idx += 1
 
         line, = ax.plot(positions[:,0], positions[:,2], color=selected_color, lw=lw,ls=ls)

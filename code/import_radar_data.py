@@ -5,6 +5,8 @@ from parameters import measurement_params
 import csv
 from datetime import datetime
 import warnings
+import json
+import matplotlib.pyplot as plt
 
 warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning) 
 
@@ -160,12 +162,12 @@ def radar_data_mat_file(filename):
     for i, (timestamp, measurments_set) in enumerate(mat_data.items()):
         # Skip the first three elements in the dictionary, since they are not measurements
         if i<=2: continue
-        #print(measurments_set)
+        print(measurments_set)
         for k,measurement in enumerate(measurments_set):
             measurements.append(set())
             measurements[-1].add(constructs.Measurement(measurement, measurement_params['cart_cov'],  float(timestamp)))
             # if k>0: print(measurements[-1])
-            timestamps.append(float(timestamp))
+        timestamps.append(float(timestamp))
 
 
     # I want to check if the exists a timestamp that is not more than 2 seconds from the previous timestamp,
@@ -197,6 +199,45 @@ def radar_data_mat_file(filename):
     timestamps = np.reshape(timestamps,(len(timestamps),1))
     return measurements, radar, timestamps
 
+def radar_data_json_file(json_file):
+    measurements = []
+    timestamps = []
+
+    with open(json_file, 'r') as file:
+        data = json.load(file)
+    
+    timestamp = data[0]["header"]["stamp"]["secs"]
+    timestamps_nano = data[0]["header"]["stamp"]["nsecs"]
+    timestamp = timestamp + timestamps_nano*10**(-9)
+    first_timestamp = timestamp
+
+    for k,item in enumerate(data):
+
+        if k == 0:
+           timestamp = 0
+        else:
+            timestamp = item["header"]["stamp"]["secs"]
+            timestamps_nano = item["header"]["stamp"]["nsecs"]
+            timestamp = timestamp + timestamps_nano*10**(-9) - first_timestamp
+       
+        item_data = item["scan"]
+        measurements.append(set())
+        for i,measurement in enumerate(item_data):
+            y = measurement["cluster_centroid"]["x"]
+            x = measurement["cluster_centroid"]["y"]
+            meas_set = (np.array([x,y]))
+            measurements[-1].add(constructs.Measurement(meas_set, measurement_params['cart_cov'],  float(timestamp)))
+        timestamps.append(float(timestamp))
+
+    measurements = np.array(measurements)
+    timestamps = np.array(timestamps)
+
+    ownship = np.zeros((len(timestamps),5))
+    radar = {1: [constructs.State(ownship_pos, np.identity(4), timestamp) for ownship_pos, timestamp in zip(ownship, timestamps)]}
+
+    timestamps = np.reshape(timestamps,(len(timestamps),1))
+    return measurements, radar, timestamps
+
 
 def check_timestamp(timestamps):
     '''Helper Function for radar_data_mat_file'''
@@ -205,10 +246,11 @@ def check_timestamp(timestamps):
     #for i in range(len(new_timestamps)-1):
     counter = 0
     i = 0
+    time_gap = 1
     while i < len(new_timestamps)-1:
-        if new_timestamps[i+1] - new_timestamps[i] > 2:
+        if new_timestamps[i+1] - new_timestamps[i] > time_gap:
             #new_timestamps.insert(i+1, new_timestamps[i]+2)
-            new_timestamps = np.insert(new_timestamps, i+1, new_timestamps[i]+2)
+            new_timestamps = np.insert(new_timestamps, i+1, new_timestamps[i]+time_gap)
             #print(f"Inserted new timestamp, {new_timestamps[i]+2}")
             counter += 1
         i += 1

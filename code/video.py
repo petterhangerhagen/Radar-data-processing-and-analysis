@@ -25,7 +25,7 @@ class Video(object):
     """
     A class representing a plot depicitng the tracking scenario.
     """
-    def __init__(self, add_covariance_ellipses=False, gamma=3.5,filename="coord_69",dir_name="test",resolution=600,fps=1):
+    def __init__(self, add_covariance_ellipses=False, gamma=3.5,filename="coord_69",dir_name="test",resolution=100,fps=1):
         self.add_covariance_ellipses = add_covariance_ellipses
         self.gamma = gamma
         self.resolution = resolution
@@ -44,9 +44,9 @@ class Video(object):
         self.ax.annotate(f"Radar",(2,2),zorder=10)
 
         # Find the limits of the plot
-        N_min, N_max, E_min, E_max = find_track_limits(track_history)
-        self.ax.set_xlim(E_min, E_max)
-        self.ax.set_ylim(N_min, N_max)
+        #N_min, N_max, E_min, E_max = find_track_limits(track_history)
+        self.ax.set_xlim(-120, 120)
+        self.ax.set_ylim(-140, 20)
         self.ax.set_aspect('equal')
         self.ax.set_xlabel('East [m]')
         self.ax.set_ylabel('North [m]')
@@ -55,41 +55,91 @@ class Video(object):
         measurement_dict, track_dict = self.create_dict(measurements, track_history, ownship, timestamps, ground_truth=None)
         measurement_dict.pop("Info")
         track_dict.pop("Info")
+        last_position_dict = {}
+        track_started = False
         for i,timestamp in enumerate(timestamps):
+            time_stamp = timestamp[0]
             # plot measurements
             if timestamp[0] in measurement_dict:
-                self.ax.plot(measurement_dict[timestamp[0]][0], measurement_dict[timestamp[0]][1], marker='o', color=measurement_dict[timestamp[0]][2], markersize=3)
+                for k in range(len(measurement_dict[timestamp[0]])):
+                    current_measurement = measurement_dict[timestamp[0]][k]
+                    self.ax.plot(current_measurement[0], current_measurement[1], marker='o', color=current_measurement[2], markersize=3)
             
             # skip first iteration, since we have no track to plot, since we need two points to plot a line
-            if i==0:
-                last_position = track_dict[timestamp[0]][1:3]
-                track_index = track_dict[timestamp[0]][0]
-                continue
+            if not track_started:
+                if time_stamp in track_dict:
+                    for track in track_dict[time_stamp]:
+                        track_index = track[0]
+                        last_position_dict[track_index] = [track[1:3],track[-1]]
+                        position = track[1:3]
+                        track_color = track[-1]
+                        self.ax.scatter(position[0],position[1],color=track_color,zorder=10)
+                        self.ax.annotate(f"Track {track_index}",(track[1],track[2]),zorder=10)
+                    track_started = True
+            else:
+                # Plotting the track
+                if time_stamp in track_dict:
+                    for k,track in enumerate(track_dict[time_stamp]):
+                        # print(track)
+                        # print("\n")
+                        track_index = track[0]
+                        if track_index in last_position_dict.keys():
+                            last_position = last_position_dict[track_index][0]
+                            track_color = last_position_dict[track_index][1]
+                            position = track[1:3]
+                            # print(last_position)
+                            # print(position)
+                            self.ax.plot([last_position[0],position[0]], [last_position[1],position[1]], color=track_color, lw=1,ls="-")
 
-            # Plotting the track
-            if timestamp[0] in track_dict:
-                # check if we have a new track
-                position = track_dict[timestamp[0]][1:3]
-                if track_index != track_dict[timestamp[0]][0]:
-                    last_position = track_dict[timestamp[0]][1:3]
-                    track_index = track_dict[timestamp[0]][0]
-                    # Plotting the last position of the previous track
-                    index = list(track_dict.keys()).index(timestamp[0])-1
-                    self.ax.plot(track_dict[list(track_dict.keys())[index]][1], track_dict[list(track_dict.keys())[index]][2], 'o', color=track_dict[list(track_dict.keys())[index]][4], markersize=5)
-                    continue
+                            edgecolor = matplotlib.colors.colorConverter.to_rgba(track_color, alpha=0)
+                            facecolor = matplotlib.colors.colorConverter.to_rgba(track_color, alpha=0.16)
+                            covariance_ellipse = get_ellipse(position, track[3], gamma=self.gamma)
+                            #print(f"Track {track_index}, covariance: {track[3]}\n")
+                            self.ax.add_patch(PolygonPatch(covariance_ellipse, facecolor = facecolor, edgecolor = edgecolor))
 
-                self.ax.plot([last_position[0],position[0]], [last_position[1],position[1]], color=track_dict[timestamp[0]][4], lw=1,ls="-")
-                edgecolor = matplotlib.colors.colorConverter.to_rgba(track_dict[timestamp[0]][4], alpha=0)
-                facecolor = matplotlib.colors.colorConverter.to_rgba(track_dict[timestamp[0]][4], alpha=0.16)
-                covariance_ellipse = get_ellipse(track_dict[timestamp[0]][1:3], track_dict[timestamp[0]][3], gamma=self.gamma)
-                self.ax.add_patch(PolygonPatch(covariance_ellipse, facecolor = facecolor, edgecolor = edgecolor))
-                last_position = track_dict[timestamp[0]][1:3]
-                if i == len(timestamps)-2:
-                    self.ax.plot(last_position[0], last_position[1], 'o', color=track_dict[timestamp[0]][4], markersize=5)
+
+                            last_position_dict[track_index] = [track[1:3],track[-1]]
+
+                        else:
+                            position = track[1:3]
+                            track_color = track[-1]
+                            self.ax.scatter(position[0],position[1],color=track_color,zorder=10)
+                            self.ax.annotate(f"Track {track_index}",(track[1],track[2]),zorder=10)
+                            last_position_dict[track_index] = [track[1:3],track[-1]]
+
+           
+            # Plotting a dot where the tracks stops
+            if i>0:
+                previous_track_ids = [track[0] for track in track_dict[timestamps[i-1][0]]]
+                current_track_ids = [track[0] for track in track_dict[timestamps[i][0]]]
+                for previous_track_id in previous_track_ids:
+                    if previous_track_id not in current_track_ids:
+                        #print("track ended")
+                        last_position = last_position_dict[previous_track_id][0]
+                        track_color = last_position_dict[previous_track_id][1]
+                        self.ax.plot(last_position[0], last_position[1], 'o', color=track_color, markersize=5)
+                
+                # position = track_dict[time_stamp][0][1:3]
+                # if track_index != track_dict[timestamp[0]][0]:
+                #     last_position = track_dict[timestamp[0]][1:3]
+                #     track_index = track_dict[timestamp[0]][0]
+                #     # Plotting the last position of the previous track
+                #     index = list(track_dict.keys()).index(timestamp[0])-1
+                #     self.ax.plot(track_dict[list(track_dict.keys())[index]][1], track_dict[list(track_dict.keys())[index]][2], 'o', color=track_dict[list(track_dict.keys())[index]][4], markersize=5)
+                #     continue
+
+                # self.ax.plot([last_position[0],position[0]], [last_position[1],position[1]], color=track_dict[timestamp[0]][4], lw=1,ls="-")
+                # edgecolor = matplotlib.colors.colorConverter.to_rgba(track_dict[timestamp[0]][4], alpha=0)
+                # facecolor = matplotlib.colors.colorConverter.to_rgba(track_dict[timestamp[0]][4], alpha=0.16)
+                # covariance_ellipse = get_ellipse(track_dict[timestamp[0]][1:3], track_dict[timestamp[0]][3], gamma=self.gamma)
+                # self.ax.add_patch(PolygonPatch(covariance_ellipse, facecolor = facecolor, edgecolor = edgecolor))
+                # last_position = track_dict[timestamp[0]][1:3]
+                # if i == len(timestamps)-2:
+                #     self.ax.plot(last_position[0], last_position[1], 'o', color=track_dict[timestamp[0]][4], markersize=5)
 
             # Saving the frame
-            self.ax.set_title(f"Time: {timestamp[0]}")
-            self.fig.savefig(f'/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp/tracker_{i+1}.png',dpi=100)
+            self.ax.set_title(f"Time: {timestamp[0]:.2f} s")
+            self.fig.savefig(f'/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp/tracker_{i+1}.png',dpi=self.resolution)
             bar.update(i)
    
         # Saving the video
@@ -112,36 +162,45 @@ class Video(object):
             measurement_color = cmap(interval[index].squeeze())
             for measurement in measurement_set:
                 if measurement.timestamp not in measurement_dict:
-                    measurement_dict[measurement.timestamp] = [measurement.value[0], measurement.value[1], measurement_color]
+                    measurement_dict[measurement.timestamp] = [[measurement.value[0], measurement.value[1], measurement_color]]
                 else:
                     measurement_dict[measurement.timestamp].append([measurement.value[0], measurement.value[1], measurement_color])
 
         # Reads out the tracks and save them to a directory
         color_idx = 0
-        colors = ['#ff7f0e', '#1f77b4', '#2ca02c','#c73838','#c738c0'] # Orange, blå, grønn, rød, rosa
+        
+        #colors = ['#ff7f0e', '#1f77b4', '#2ca02c','#c73838','#c738c0'] # Orange, blå, grønn, rød, rosa
+        colors = ['#ff7f0e', '#1f77b4', '#2ca02c','#c73838','#c738c0',"#33A8FF",'#DBFF33','#33FFBD','#FFBD33',] # Orange, blå, grønn, rød, rosa,blå, gul/grønn, turkis, gul
         color = None
         track_dict = {}
         track_dict["Info"] = ["Track index","x","y","covariance","color"]
         for index, trajectory in track_history.items():
+            # print(index)
+            # print(trajectory)
+            # print("\n")
             # Assigning a color to the track
             if color is not None:
                 selected_color = color
             else:
-                selected_color = colors[color_idx%5] 
+                selected_color = colors[color_idx%len(colors)] 
                 color_idx += 1
             # Adding the track to the dictionary
+            #print("\n")
             for track in trajectory:
+                #print(track)
                 if track.timestamp not in track_dict:
-                    track_dict[track.timestamp] = [index, track.posterior[0][0], track.posterior[0][2], track.posterior[1][0:3:2,0:3:2], selected_color]
+                    track_dict[track.timestamp] = [[index, track.posterior[0][0], track.posterior[0][2], track.posterior[1][0:3:2,0:3:2], selected_color]]
                 else:
                     track_dict[track.timestamp].append([index, track.posterior[0][0],track.posterior[0][2], track.posterior[1][0:3:2,0:3:2], selected_color])
 
         # Saving the dictionaries
         np.save("/home/aflaptop/Documents/radar_tracker/data/track_dict.npy",track_dict)
         np.save("/home/aflaptop/Documents/radar_tracker/data/measurement_dict.npy",measurement_dict)
-        save_track_to_mat(track_dict, "/home/aflaptop/Documents/radar_tracker/data/track_dict.mat")
-        save_measurement_to_mat(measurement_dict, "/home/aflaptop/Documents/radar_tracker/data/measurement_dict.mat")
+        #save_track_to_mat(track_dict, "/home/aflaptop/Documents/radar_tracker/data/track_dict.mat")
+        #save_measurement_to_mat(measurement_dict, "/home/aflaptop/Documents/radar_tracker/data/measurement_dict.mat")
         return measurement_dict, track_dict
+
+   
     
 def save_track_to_mat(data_dict, filename):
     matlab_data = {}
