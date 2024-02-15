@@ -98,7 +98,7 @@ class ScenarioPlot(object):
 
     def create_with_map(self, measurements, track_history, ownship, timestamps, ground_truth=None):
         # Plotting the occupancy grid'
-        data = np.load(f"/home/{username}/Documents/radar_tracker/data/occupancy_grid_new.npy",allow_pickle='TRUE').item()
+        data = np.load(f"/home/{username}/Documents/radar_tracker/occupancy_grid.npy",allow_pickle='TRUE').item()
         occupancy_grid = data["occupancy_grid"]
         origin_x = data["origin_x"]
         origin_y = data["origin_y"]
