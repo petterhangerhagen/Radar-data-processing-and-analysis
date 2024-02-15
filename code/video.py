@@ -110,15 +110,16 @@ class Video(object):
            
             # Plotting a dot where the tracks stops
             if i>0:
-                previous_track_ids = [track[0] for track in track_dict[timestamps[i-1][0]]]
-                current_track_ids = [track[0] for track in track_dict[timestamps[i][0]]]
-                for previous_track_id in previous_track_ids:
-                    if previous_track_id not in current_track_ids:
-                        #print("track ended")
-                        last_position = last_position_dict[previous_track_id][0]
-                        track_color = last_position_dict[previous_track_id][1]
-                        self.ax.plot(last_position[0], last_position[1], 'o', color=track_color, markersize=5)
-                
+                if timestamps[i-1][0] in track_dict.keys() and timestamps[i][0] in track_dict.keys():
+                    previous_track_ids = [track[0] for track in track_dict[timestamps[i-1][0]]]
+                    current_track_ids = [track[0] for track in track_dict[timestamps[i][0]]]
+                    for previous_track_id in previous_track_ids:
+                        if previous_track_id not in current_track_ids:
+                            #print("track ended")
+                            last_position = last_position_dict[previous_track_id][0]
+                            track_color = last_position_dict[previous_track_id][1]
+                            self.ax.plot(last_position[0], last_position[1], 'o', color=track_color, markersize=5)
+                    
                 # position = track_dict[time_stamp][0][1:3]
                 # if track_index != track_dict[timestamp[0]][0]:
                 #     last_position = track_dict[timestamp[0]][1:3]

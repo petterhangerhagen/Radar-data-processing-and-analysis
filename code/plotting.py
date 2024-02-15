@@ -95,6 +95,81 @@ class ScenarioPlot(object):
         print(f"Saving tracker_{save_name}")
         plt.close()
 
+    def create_with_map(self, measurements, track_history, ownship, timestamps, ground_truth=None):
+        # Plotting the occupancy grid'
+        data = np.load("/home/aflaptop/Documents/radar_tracker/data/occupancy_grid_new.npy",allow_pickle='TRUE').item()
+        occupancy_grid = data["occupancy_grid"]
+        origin_x = data["origin_x"]
+        origin_y = data["origin_y"]
+        self.ax1.imshow(occupancy_grid, cmap='binary', interpolation='none', origin='upper', extent=[0, occupancy_grid.shape[1], 0, occupancy_grid.shape[0]])
+        #plt.show()
+        
+
+        #self.write_track_time_to_plot(track_history)
+        #self.write_coherence_factor_to_plot(track_history)
+
+        for key in ownship.keys():
+            x_radar = ownship[key][0].posterior[0][0] + origin_x
+            y_radar = ownship[key][0].posterior[0][2] + origin_y
+            self.ax1.scatter(x_radar,y_radar,c="Red",zorder=10)
+            self.ax1.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10)
+
+
+        for measurement in measurements:
+            for meas in measurement:
+                meas.value[0] = meas.value[0] + origin_x
+                meas.value[1] = meas.value[1] + origin_y
+        plot_measurements(self.filename,measurements, self.ax1, timestamps, marker_size=self.measurement_marker_size)
+        
+        if ground_truth:
+            plot_track_pos(ground_truth, self.ax1, color='k', marker_size=self.track_marker_size)
+
+        for k,track in enumerate(track_history):
+            # if k > 0:
+            #     break
+            for p,track_point in enumerate(track_history[track]):
+                if p > 0:
+                    break
+                print(f"track_point.posterior[0]: {track_point.posterior[0]}")
+                track_history[track][p].posterior[0][0] = track_point.posterior[0][0] + origin_x
+                track_history[track][p].posterior[0][2] = track_point.posterior[0][2] + origin_y
+                #track_point.posterior[0][2] += origin_y
+                print(f"track_point.posterior[0]: {track_point.posterior[0]}\n")
+                #self.ax1.scatter(x,y,c="blue",zorder=10)
+                #self.ax1.annotate(f"Track {track}",(x,y),zorder=10)
+            #print(f"track: {track_history[track]}")
+                
+        plot_track_pos(
+            track_history,
+            self.ax1,
+            add_index=self.add_track_indexes,
+            add_covariance_ellipses=self.add_covariance_ellipses,
+            add_validation_gates=self.add_validation_gates,
+            gamma=self.gamma)
+
+        #N_min, N_max, E_min, E_max = find_track_limits(track_history)
+        self.ax1.set_xlim(origin_x-120,origin_x + 120)
+        self.ax1.set_ylim(origin_y-140, origin_y + 20)
+        self.ax1.set_aspect('equal')
+        self.ax1.set_xlabel('East [m]')
+        self.ax1.set_ylabel('North [m]')
+        plt.tight_layout()
+
+        # for key in track_history.keys():
+        #     x_start = track_history[key][0].posterior[0][0]
+        #     y_start = track_history[key][0].posterior[0][2]
+        #     self.ax1.scatter(x_start,y_start,c="red",zorder=10)
+        #     self.ax1.annotate(f"Start Track {key}",(x_start,y_start),zorder=10)
+
+        self.ax1.grid(True)
+        plt.show()
+        # now_time = datetime.datetime.now().strftime("%H,%M,%S")
+        # save_name = f'{self.dir_name}/{self.filename}({now_time}).png'
+        # self.fig.savefig(save_name,dpi=self.resolution)
+        # print(f"Saving tracker_{save_name}")
+        # plt.close()
+
+
     def write_track_time_to_plot(self, track_history):
         text = ""
         for i,track in enumerate(track_history.items()):

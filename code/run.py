@@ -129,13 +129,16 @@ def save_measurements(measurements,timestamps):
     np.save("/home/aflaptop/Documents/radar_tracker/data/measurements_after_importing.npy",measurement_dict)
     
 def check_lenght_of_tracks(track_history):
+    track_lengths_dict = {}
     for track in track_history.items():
         first_mean, cov = track[1][0].posterior
         last_mean, cov = track[1][-1].posterior
         first_point = (first_mean[0],first_mean[2])
         last_point = (last_mean[0],last_mean[2])
-        lenght = np.sqrt((first_point[0]-last_point[0])**2 + (first_point[1]-last_point[1])**2)
-        print(f"lenght of track {track[0]} = {lenght:.2f}") 
+        track_length = np.sqrt((first_point[0]-last_point[0])**2 + (first_point[1]-last_point[1])**2)
+        #print(f"lenght of track {track[0]} = {track_length:.2f}") 
+        track_lengths_dict[track[0]] = track_length
+    return track_lengths_dict
 
 def check_coherence_factor(track_history,coherence_factor=0.75):
     not_valid_tracks = []
@@ -183,14 +186,17 @@ if __name__ == '__main__':
     single_target = tracker_state["single_target"]
     visibility_off = tracker_state["visibility_off"]
 
+    # 1: True, 0: False
     plot_statement = 1
-    video_statement = 1
-    counting_matrix = False
+    video_statement = 0
     remove_track_with_low_coherence_factor = 1
+
+    counting_matrix = 0
+    reset_count_matrix = False
     
     # Define count matrix
     if counting_matrix:
-        count_matrix = CountMatrix(reset=True)
+        count_matrix = CountMatrix(reset=reset_count_matrix)
 
     ### Import data ###
     #root = "/home/aflaptop/Documents/data_mradmin/json_files/data_aug_15-18/"
@@ -211,7 +217,11 @@ if __name__ == '__main__':
     #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-18-16-20-33.json"]
     #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-19-11-18-46.json"]
     #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-18-17-18-06.json"]
-    path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-19-16-18-26.json"]
+    #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-19-16-18-26.json"]
+    #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-19-15-09-57.json"]
+    #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-18-14-52-55.json"]
+    path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-18-15-30-32.json"]
+    path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-19-16-49-34.json"]
     for i,filename in enumerate(path_list):
         if True:
             print(f'File number {i+1} of {len(path_list)}')
@@ -250,6 +260,31 @@ if __name__ == '__main__':
             # Calculate coherence factor 
             unvalid_tracks = check_coherence_factor(manager.track_history,coherence_factor=0.75)
 
+            # Check speed of tracks
+            track_lengths_dict = check_lenght_of_tracks(manager.track_history)
+            for track in manager.track_history.items():
+                track_id = track[0]
+                track_start_time = track[1][0].timestamp
+                track_end_time = track[1][-1].timestamp
+                track_time = track_end_time - track_start_time
+                track_speed = track_lengths_dict[track_id]/track_time
+                track_speed_knots = 1.94384449*track_speed
+                print(f"Speed of track {track_id} = {track_speed_knots:.2f} knots")
+                if track_speed_knots > 6 and track_id not in unvalid_tracks:
+                    unvalid_tracks.append(track_id)
+            
+            #print(f"Track lengths: {track_lengths_dict}\n")
+            for track_length in track_lengths_dict.items():
+                if track_length[1] < 10 and track_length[0] not in unvalid_tracks:
+                    unvalid_tracks.append(track_length[0])
+
+            # unvalid_tracks = []
+            # for track in manager.track_history.items():
+            #     track_id = track[0]
+            #     if track_id != 7:
+            #         unvalid_tracks.append(track_id)
+            # print(f"Unvalid tracks: {unvalid_tracks}\n")
+                    
             # Print current tracks
             print_current_tracks(manager.track_history)
 
@@ -262,11 +297,14 @@ if __name__ == '__main__':
                 print("After removing tracks with low coherence factor")
                 print_current_tracks(manager.track_history)
 
+           
+                
+
             # Video vs image
             if plot_statement:
                 # plotting
                 plot = plotting.ScenarioPlot(measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
-                plot.create(measurements, manager.track_history, ownship, timestamps)
+                plot.create_with_map(measurements, manager.track_history, ownship, timestamps)
             
             if video_statement:
                 inp = input("Do you want to create a video? (y/n): ")
@@ -275,9 +313,9 @@ if __name__ == '__main__':
                     video_manager.create_video(measurements, manager.track_history, ownship, timestamps)
                 else:
                     print("No video created")
-            # if counting_matrix:
-            #     # Check start and stop of tracks
-            #     count_matrix.check_start_and_stop(track_history=manager.track_history,filename=filename)
+            if counting_matrix:
+                # Check start and stop of tracks
+                count_matrix.check_start_and_stop(track_history=manager.track_history,filename=filename)
 
     # if counting_matrix:
     #     unvalidated_tracks = {"Number of tracks": count_matrix.number_of_tracks,"Unvalidated tracks": count_matrix.unvalidated_track}
