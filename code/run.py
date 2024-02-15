@@ -11,6 +11,8 @@ import os
 import glob
 import datetime
 
+username = os.getenv('USERNAME') if os.name == 'nt' else os.getenv('USER')
+
 def setup_manager():
     if IMM_off:
         kinematic_models = [models.CVModel(process_params['cov_CV_single'])]
@@ -66,7 +68,8 @@ def setup_manager():
 
 def make_new_directory():
     # Making new directory for the results
-    root = "/home/aflaptop/Documents/radar_tracker/tracking_results"
+    
+    root = f"/home/{username}/Documents/radar_tracker/tracking_results"
     todays_date = datetime.datetime.now().strftime("%d-%b")
     path = os.path.join(root,todays_date)
     if not os.path.exists(path):
@@ -126,7 +129,7 @@ def save_measurements(measurements,timestamps):
                     measurement_dict[timestamp[0]].append([measurement.mean[0],measurement.mean[1]])
         else:
             measurement_dict[timestamp[0]] = []
-    np.save("/home/aflaptop/Documents/radar_tracker/data/measurements_after_importing.npy",measurement_dict)
+    np.save(f"/home/{username}/Documents/radar_tracker/data/measurements_after_importing.npy",measurement_dict)
     
 def check_lenght_of_tracks(track_history):
     track_lengths_dict = {}
@@ -200,7 +203,7 @@ if __name__ == '__main__':
 
     ### Import data ###
     #root = "/home/aflaptop/Documents/data_mradmin/json_files/data_aug_15-18/"
-    root = "/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19"
+    root = f"/home/{username}/Documents/radar_data/data_aug_18-19"
     #root = "/home/aflaptop/Documents/data_mradmin/json_files/data_aug_22-23"
     #root = "/home/aflaptop/Documents/data_mradmin/json_files/data_sep_8-9-11-14"
     path_list = glob.glob(os.path.join(root, '*.json'))
@@ -220,8 +223,9 @@ if __name__ == '__main__':
     #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-19-16-18-26.json"]
     #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-19-15-09-57.json"]
     #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-18-14-52-55.json"]
-    path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-18-15-30-32.json"]
-    path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-19-16-49-34.json"]
+    path_list = [f"/home/{username}/Documents/radar_data/data_aug_18-19/rosbag_2023-08-18-15-30-32.json"]
+    path_list = [f"/home/{username}/Documents/radar_data/data_aug_18-19/rosbag_2023-08-19-16-49-34.json"]
+
     for i,filename in enumerate(path_list):
         if True:
             print(f'File number {i+1} of {len(path_list)}')
@@ -322,3 +326,6 @@ if __name__ == '__main__':
     #     np.save("/home/aflaptop/Documents/radar_tracker/data/unvalidated_tracks.npy",unvalidated_tracks)
     #     files_with_tracks_on_diagonal = {"Number of tracks on diagonal":count_matrix.number_of_tracks_on_diagonal,"Files":count_matrix.files_with_tracks_on_diagonal}
     #     np.save("/home/aflaptop/Documents/radar_tracker/data/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
+
+
+    

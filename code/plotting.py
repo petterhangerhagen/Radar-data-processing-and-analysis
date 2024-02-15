@@ -15,6 +15,7 @@ import yaml
 import os
 import datetime
 from parameters import tracker_params, measurement_params, process_params, tracker_state
+from run import username
 
 # define font size, and size of plots
 matplotlib.rcParams['font.size'] = 7
@@ -97,7 +98,7 @@ class ScenarioPlot(object):
 
     def create_with_map(self, measurements, track_history, ownship, timestamps, ground_truth=None):
         # Plotting the occupancy grid'
-        data = np.load("/home/aflaptop/Documents/radar_tracker/data/occupancy_grid_new.npy",allow_pickle='TRUE').item()
+        data = np.load(f"/home/{username}/Documents/radar_tracker/data/occupancy_grid_new.npy",allow_pickle='TRUE').item()
         occupancy_grid = data["occupancy_grid"]
         origin_x = data["origin_x"]
         origin_y = data["origin_y"]
@@ -339,10 +340,10 @@ class ScenarioPlot(object):
                                     self.ax.add_patch(PolygonPatch(covariance_ellipse, facecolor = facecolor, edgecolor = edgecolor))
 
                 self.ax.set_title(f"Time: {timestamp[0]}")
-                self.fig.savefig(f'/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp/tracker_{i+1}.png',dpi=100)
+                self.fig.savefig(f'/home/{username}/Documents/data_mradmin/tracking_results/videos/temp/tracker_{i+1}.png',dpi=100)
                 bar.update(i)
 
-        photos_file_path = "/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp"
+        photos_file_path = f"/home/{username}/Documents/data_mradmin/tracking_results/videos/temp"
         video_name = f'{photos_file_path[:-4]}{self.filename}.avi'
         images_to_video_opencv(photos_file_path, video_name, fps=10)
         print(f"Saving {video_name.split('/')[-1]}")
