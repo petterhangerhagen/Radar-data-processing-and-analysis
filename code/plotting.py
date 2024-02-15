@@ -98,7 +98,7 @@ class ScenarioPlot(object):
 
     def create_with_map(self, measurements, track_history, ownship, timestamps, ground_truth=None):
         # Plotting the occupancy grid'
-        data = np.load(f"/home/{username}/Documents/radar_tracker/occupancy_grid.npy",allow_pickle='TRUE').item()
+        data = np.load(f"/home/{username}/Documents/radar_tracker/code/occupancy_grid.npy",allow_pickle='TRUE').item()
         occupancy_grid = data["occupancy_grid"]
         origin_x = data["origin_x"]
         origin_y = data["origin_y"]
@@ -163,12 +163,11 @@ class ScenarioPlot(object):
         #     self.ax1.annotate(f"Start Track {key}",(x_start,y_start),zorder=10)
 
         self.ax1.grid(True)
-        plt.show()
-        # now_time = datetime.datetime.now().strftime("%H,%M,%S")
-        # save_name = f'{self.dir_name}/{self.filename}({now_time}).png'
-        # self.fig.savefig(save_name,dpi=self.resolution)
-        # print(f"Saving tracker_{save_name}")
-        # plt.close()
+        now_time = datetime.datetime.now().strftime("%H,%M,%S")
+        save_name = f'{self.dir_name}/{self.filename}({now_time}).png'
+        self.fig.savefig(save_name,dpi=self.resolution)
+        print(f"Saving tracker_{save_name}")
+        plt.close()
 
 
     def write_track_time_to_plot(self, track_history):
