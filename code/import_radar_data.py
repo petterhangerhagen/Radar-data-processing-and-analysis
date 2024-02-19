@@ -7,6 +7,7 @@ from datetime import datetime
 import warnings
 import json
 import matplotlib.pyplot as plt
+#from run import username
 
 warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning) 
 
@@ -199,7 +200,13 @@ def radar_data_mat_file(filename):
     timestamps = np.reshape(timestamps,(len(timestamps),1))
     return measurements, radar, timestamps
 
-def radar_data_json_file(json_file):
+def radar_data_json_file(json_file, relative_to_map = False):
+
+    if relative_to_map:
+        data = np.load(f"/home/aflaptop/Documents/radar_tracker/code/occupancy_grid.npy",allow_pickle='TRUE').item()
+        origin_x = data["origin_y"]
+        origin_y = data["origin_x"]
+
     measurements = []
     timestamps = []
 
@@ -223,8 +230,12 @@ def radar_data_json_file(json_file):
         item_data = item["scan"]
         measurements.append(set())
         for i,measurement in enumerate(item_data):
-            y = measurement["cluster_centroid"]["x"]
-            x = measurement["cluster_centroid"]["y"]
+            if relative_to_map:
+                y = measurement["cluster_centroid"]["x"] + origin_x
+                x = measurement["cluster_centroid"]["y"] + origin_y
+            else:
+                y = measurement["cluster_centroid"]["x"]
+                x = measurement["cluster_centroid"]["y"]
             meas_set = (np.array([x,y]))
             measurements[-1].add(constructs.Measurement(meas_set, measurement_params['cart_cov'],  float(timestamp)))
         timestamps.append(float(timestamp))

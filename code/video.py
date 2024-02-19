@@ -1,21 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-import warnings
-from tqdm import tqdm
 import progressbar
+import os
 
 from matplotlib.cm import get_cmap
 from shapely.geometry.point import Point
 from shapely import affinity
 from shapely.geometry import Polygon
 from descartes import PolygonPatch
-from images_to_video import images_to_video_opencv, empty_folder
-import yaml
-import os
-import datetime
+from utilities.images_to_video import images_to_video_opencv, empty_folder
 from parameters import tracker_params, measurement_params, process_params, tracker_state
-from scipy.io import savemat
 
 # define font size, and size of plots
 matplotlib.rcParams['font.size'] = 7
@@ -25,12 +20,12 @@ class Video(object):
     """
     A class representing a plot depicitng the tracking scenario.
     """
-    def __init__(self, add_covariance_ellipses=False, gamma=3.5,filename="coord_69",dir_name="test",resolution=100,fps=1):
+    def __init__(self, add_covariance_ellipses=False, gamma=3.5,filename="coord_69",resolution=100,fps=1):
         self.add_covariance_ellipses = add_covariance_ellipses
         self.gamma = gamma
         self.resolution = resolution
         self.filename = filename.split("/")[-1].split("_")[-1].split(".")[0]
-        self.dir_name = dir_name
+        #self.dir_name = dir_name
         self.fps = fps
         self.fig, self.ax = plt.subplots()
 
@@ -120,34 +115,19 @@ class Video(object):
                             track_color = last_position_dict[previous_track_id][1]
                             self.ax.plot(last_position[0], last_position[1], 'o', color=track_color, markersize=5)
                     
-                # position = track_dict[time_stamp][0][1:3]
-                # if track_index != track_dict[timestamp[0]][0]:
-                #     last_position = track_dict[timestamp[0]][1:3]
-                #     track_index = track_dict[timestamp[0]][0]
-                #     # Plotting the last position of the previous track
-                #     index = list(track_dict.keys()).index(timestamp[0])-1
-                #     self.ax.plot(track_dict[list(track_dict.keys())[index]][1], track_dict[list(track_dict.keys())[index]][2], 'o', color=track_dict[list(track_dict.keys())[index]][4], markersize=5)
-                #     continue
-
-                # self.ax.plot([last_position[0],position[0]], [last_position[1],position[1]], color=track_dict[timestamp[0]][4], lw=1,ls="-")
-                # edgecolor = matplotlib.colors.colorConverter.to_rgba(track_dict[timestamp[0]][4], alpha=0)
-                # facecolor = matplotlib.colors.colorConverter.to_rgba(track_dict[timestamp[0]][4], alpha=0.16)
-                # covariance_ellipse = get_ellipse(track_dict[timestamp[0]][1:3], track_dict[timestamp[0]][3], gamma=self.gamma)
-                # self.ax.add_patch(PolygonPatch(covariance_ellipse, facecolor = facecolor, edgecolor = edgecolor))
-                # last_position = track_dict[timestamp[0]][1:3]
-                # if i == len(timestamps)-2:
-                #     self.ax.plot(last_position[0], last_position[1], 'o', color=track_dict[timestamp[0]][4], markersize=5)
-
             # Saving the frame
             self.ax.set_title(f"Time: {timestamp[0]:.2f} s")
-            self.fig.savefig(f'/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp/tracker_{i+1}.png',dpi=self.resolution)
+            #self.fig.savefig(f'/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp/tracker_{i+1}.png',dpi=self.resolution)
+            self.fig.savefig(f'/home/aflaptop/Documents/radar_tracking_results/videos/temp/tracker_{i+1}.png',dpi=self.resolution)
+
             bar.update(i)
    
         # Saving the video
-        photos_file_path = "/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp"
+        #photos_file_path = "/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp"
+        photos_file_path = "/home/aflaptop/Documents/radar_tracking_results/videos/temp"
         video_name = f'{photos_file_path[:-4]}{self.filename}.avi'
         images_to_video_opencv(photos_file_path, video_name, self.fps)
-        print(f"Saving {video_name.split('/')[-1]}")
+        print(f"\nSaving the video to {video_name}")
         empty_folder(photos_file_path)
 
     def create_dict(self, measurements, track_history, ownship, timestamps, ground_truth=None):
@@ -195,41 +175,12 @@ class Video(object):
                     track_dict[track.timestamp].append([index, track.posterior[0][0],track.posterior[0][2], track.posterior[1][0:3:2,0:3:2], selected_color])
 
         # Saving the dictionaries
-        np.save("/home/aflaptop/Documents/radar_tracker/data/track_dict.npy",track_dict)
-        np.save("/home/aflaptop/Documents/radar_tracker/data/measurement_dict.npy",measurement_dict)
+        #np.save("/home/aflaptop/Documents/radar_tracker/data/track_dict.npy",track_dict)
+        #np.save("/home/aflaptop/Documents/radar_tracker/data/measurement_dict.npy",measurement_dict)
         #save_track_to_mat(track_dict, "/home/aflaptop/Documents/radar_tracker/data/track_dict.mat")
         #save_measurement_to_mat(measurement_dict, "/home/aflaptop/Documents/radar_tracker/data/measurement_dict.mat")
         return measurement_dict, track_dict
 
-   
-    
-def save_track_to_mat(data_dict, filename):
-    matlab_data = {}
-    for key, value in data_dict.items():
-        # Convert the key to a string
-        str_key = str(key)
-        matlab_data[str_key] = {
-            'Track index': value[0],
-            'x': value[1],
-            'y': value[2],
-            'covariance': value[3],
-            'color_code': value[4]
-        }
-    # Save the data to the MATLAB file
-    savemat(filename, matlab_data)
-        
-def save_measurement_to_mat(data_dict, filename):
-    matlab_data = {}
-    for key, value in data_dict.items():
-        # Convert the key to a string
-        str_key = str(key)
-        matlab_data[str_key] = {
-            'x': value[0],
-            'y': value[1],
-            'color:code': value[2]
-        }
-    # Save the data to the MATLAB file
-    savemat(filename, matlab_data)
 
 def get_ellipse(center, Sigma, gamma=1):
     """

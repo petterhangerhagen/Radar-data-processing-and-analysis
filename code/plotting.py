@@ -2,20 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 import warnings
-from tqdm import tqdm
-import progressbar
 
 from matplotlib.cm import get_cmap
 from shapely.geometry.point import Point
 from shapely import affinity
 from shapely.geometry import Polygon
 from descartes import PolygonPatch
-from images_to_video import images_to_video_opencv, empty_folder
-import yaml
-import os
 import datetime
 from parameters import tracker_params, measurement_params, process_params, tracker_state
-from run import username
+from matplotlib.colors import LinearSegmentedColormap
 
 # define font size, and size of plots
 matplotlib.rcParams['font.size'] = 7
@@ -35,38 +30,27 @@ class ScenarioPlot(object):
         self.resolution = resolution
         self.filename = filename.split("/")[-1].split("_")[-1].split(".")[0]
         self.dir_name = dir_name
-        self.fig, self.ax = plt.subplots(figsize=(10, 7.166666))
+        self.fig, self.ax = plt.subplots(figsize=(11, 7.166666))
         self.ax1 = self.ax
         self.write_parameters_to_plot()
         
 
     def create(self, measurements, track_history, ownship, timestamps, ground_truth=None):
-        # Plotting the occupancy grid'
-        #data = np.load("/home/aflaptop/Documents/radar_tracker/data/occupancy_grid.npy",allow_pickle='TRUE').item()
-        #occupancy_grid = data["occupancy_grid"]
-        #origin_x = data["origin_x"]
-        #origin_y = data["origin_y"]
-        #self.ax1.imshow(occupancy_grid, cmap='binary', interpolation='none', origin='upper', extent=[0, occupancy_grid.shape[1], 0, occupancy_grid.shape[0]])
-        #plt.show()
-        # for measurement in measurements:
-        #     for meas in measurement:
-        #         meas.value[0] = meas.value[0] #+ origin_x
-        #         meas.value[1] = meas.value[1] #+ origin_y
 
         self.write_track_time_to_plot(track_history)
         self.write_coherence_factor_to_plot(track_history)
 
-        for key in ownship.keys():
-            x_radar = ownship[key][0].posterior[0][0] #+ origin_x
-            y_radar = ownship[key][0].posterior[0][2] #+ origin_y
-            self.ax1.scatter(x_radar,y_radar,c="black",zorder=10)
-            self.ax1.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10)
-            
+        # Radar pos
+        x_radar = 0
+        y_radar = 0
+        self.ax1.scatter(x_radar,y_radar,c="black",zorder=10)
+        self.ax1.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10)
+        
         plot_measurements(self.filename,measurements, self.ax1, timestamps, marker_size=self.measurement_marker_size)
         
         if ground_truth:
             plot_track_pos(ground_truth, self.ax1, color='k', marker_size=self.track_marker_size)
-
+        
         plot_track_pos(
             track_history,
             self.ax1,
@@ -90,6 +74,7 @@ class ScenarioPlot(object):
             self.ax1.annotate(f"Start Track {key}",(x_start,y_start),zorder=10)
 
         self.ax1.grid(True)
+        #plt.show()
         now_time = datetime.datetime.now().strftime("%H,%M,%S")
         save_name = f'{self.dir_name}/{self.filename}({now_time}).png'
         self.fig.savefig(save_name,dpi=self.resolution)
@@ -97,49 +82,32 @@ class ScenarioPlot(object):
         plt.close()
 
     def create_with_map(self, measurements, track_history, ownship, timestamps, ground_truth=None):
+
         # Plotting the occupancy grid'
-        data = np.load(f"/home/{username}/Documents/radar_tracker/code/occupancy_grid.npy",allow_pickle='TRUE').item()
+        data = np.load(f"/home/aflaptop/Documents/radar_tracker/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
         occupancy_grid = data["occupancy_grid"]
         origin_x = data["origin_x"]
         origin_y = data["origin_y"]
-        self.ax1.imshow(occupancy_grid, cmap='binary', interpolation='none', origin='upper', extent=[0, occupancy_grid.shape[1], 0, occupancy_grid.shape[0]])
-        #plt.show()
+
+        colors = [(1, 1, 1), (0.8, 0.8, 0.8)]  # Black to light gray
+        cm = LinearSegmentedColormap.from_list('custom_gray', colors, N=256)
+        self.ax1.imshow(occupancy_grid, cmap=cm, interpolation='none', origin='upper', extent=[0, occupancy_grid.shape[1], 0, occupancy_grid.shape[0]])
         
 
-        #self.write_track_time_to_plot(track_history)
-        #self.write_coherence_factor_to_plot(track_history)
+        self.write_track_time_to_plot(track_history)
+        self.write_coherence_factor_to_plot(track_history)
 
-        for key in ownship.keys():
-            x_radar = ownship[key][0].posterior[0][0] + origin_x
-            y_radar = ownship[key][0].posterior[0][2] + origin_y
-            self.ax1.scatter(x_radar,y_radar,c="Red",zorder=10)
-            self.ax1.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10)
+        # Radar pos
+        x_radar = origin_x
+        y_radar = origin_y
+        self.ax1.plot(x_radar,y_radar,c="red", marker="o", zorder=10, markersize=10)
+        self.ax1.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10,fontsize=10)
 
-
-        for measurement in measurements:
-            for meas in measurement:
-                meas.value[0] = meas.value[0] + origin_x
-                meas.value[1] = meas.value[1] + origin_y
         plot_measurements(self.filename,measurements, self.ax1, timestamps, marker_size=self.measurement_marker_size)
         
         if ground_truth:
             plot_track_pos(ground_truth, self.ax1, color='k', marker_size=self.track_marker_size)
 
-        for k,track in enumerate(track_history):
-            # if k > 0:
-            #     break
-            for p,track_point in enumerate(track_history[track]):
-                if p > 0:
-                    break
-                print(f"track_point.posterior[0]: {track_point.posterior[0]}")
-                track_history[track][p].posterior[0][0] = track_point.posterior[0][0] + origin_x
-                track_history[track][p].posterior[0][2] = track_point.posterior[0][2] + origin_y
-                #track_point.posterior[0][2] += origin_y
-                print(f"track_point.posterior[0]: {track_point.posterior[0]}\n")
-                #self.ax1.scatter(x,y,c="blue",zorder=10)
-                #self.ax1.annotate(f"Track {track}",(x,y),zorder=10)
-            #print(f"track: {track_history[track]}")
-                
         plot_track_pos(
             track_history,
             self.ax1,
@@ -156,13 +124,27 @@ class ScenarioPlot(object):
         self.ax1.set_ylabel('North [m]')
         plt.tight_layout()
 
-        # for key in track_history.keys():
-        #     x_start = track_history[key][0].posterior[0][0]
-        #     y_start = track_history[key][0].posterior[0][2]
-        #     self.ax1.scatter(x_start,y_start,c="red",zorder=10)
-        #     self.ax1.annotate(f"Start Track {key}",(x_start,y_start),zorder=10)
+        for key in track_history.keys():
+            x_start = track_history[key][0].posterior[0][0]
+            y_start = track_history[key][0].posterior[0][2]
+            self.ax1.plot(x_start,y_start,c="red", marker="o",zorder=10,markersize=5)
+            self.ax1.annotate(f"Start Track {key}",(x_start,y_start),zorder=10)
+
+        # reformating the x and y axis
+        x_axis_list = np.arange(origin_x-120,origin_x+121,20)
+        x_axis_list_str = []
+        for x in x_axis_list:
+            x_axis_list_str.append(str(int(x-origin_x)))
+        plt.xticks(x_axis_list, x_axis_list_str)
+
+        y_axis_list = np.arange(origin_y-140,origin_y+21,20)
+        y_axis_list_str = []
+        for y in y_axis_list:
+            y_axis_list_str.append(str(int(y-origin_y)))
+        plt.yticks(y_axis_list, y_axis_list_str)
 
         self.ax1.grid(True)
+        # plt.show()
         now_time = datetime.datetime.now().strftime("%H,%M,%S")
         save_name = f'{self.dir_name}/{self.filename}({now_time}).png'
         self.fig.savefig(save_name,dpi=self.resolution)
@@ -241,112 +223,7 @@ class ScenarioPlot(object):
         font_size = 10
         self.ax.text(1.03, 0.99, my_text, transform=self.ax.transAxes, fontsize=font_size, verticalalignment='top', bbox=props)
 
-    def create_video(self, measurements, track_history, ownship, timestamps, ground_truth=None):
 
-        bar = progressbar.ProgressBar(maxval=len(measurements)).start()
-
-        # Creating a dot where the radar is placed
-        for i, key in enumerate(ownship.keys()):
-            x_radar = ownship[key][0].posterior[0][0]
-            y_radar = ownship[key][0].posterior[0][2]
-            self.ax.scatter(x_radar,y_radar,c="black",zorder=10)
-            self.ax.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10)
-
-        N_min, N_max, E_min, E_max = find_track_limits(track_history)
-        self.ax.set_xlim(E_min, E_max)
-        self.ax.set_ylim(N_min, N_max)
-        self.ax.set_aspect('equal')
-        self.ax.set_xlabel('East [m]')
-        self.ax.set_ylabel('North [m]')
-        
-
-        interval = (timestamps-timestamps[0]+timestamps[-1]/5)/(timestamps[-1]-timestamps[0]+timestamps[-1]/5)
-        positions = np.zeros((2,len(measurements)))
-        color2 = None
-        len_of_tracks = {}
-        for i,(measurement,timestamp) in enumerate(zip(measurements,timestamps)):
-            if measurement:
-                cmap = get_cmap('Greys')
-                x = list(measurement)[0].mean[0]
-                y = list(measurement)[0].mean[1]
-                positions[0][i] = x
-                positions[1][i] = y
-                color = cmap((interval[i].squeeze()))
-                self.ax.plot(x,y, marker='o', color=color, markersize=self.measurement_marker_size)
-                
-                measurement_timestamp = list(measurement)[0].timestamp
-
-                if i > 1:
-                    color_idx = 0
-                    colors = ['#ff7f0e', '#1f77b4', '#2ca02c']
-                    
-                    # The locking in this part is a bit confusing, 
-                    # but it is done this way to not plot thing twice, meaning the colors get "thick"
-                    for index, trajectory in track_history.items():
-                        if len(trajectory) == 0:
-                            continue
-
-                        if color2 is not None:
-                            selected_color = color2
-                        else:
-                            selected_color = colors[color_idx%3]
-                            color_idx += 1
-
-                        # Used to check if there has been added any new tracks
-                        plot_away = True
-                        try:
-                            temp1 = len_of_tracks[index]
-                        except KeyError:
-                            temp1 = None
-
-                        # adding track position and ellipse info to list
-                        track_pos = []
-                        ellipse_center = []
-                        ellipse_sigma = []
-                        for track in trajectory:
-                            if track.timestamp < measurement_timestamp:
-                                track_pos.append(track.posterior[0])
-                                ellipse_center.append(track.posterior[0][0:3:2]),
-                                ellipse_sigma.append(track.posterior[1][0:3:2,0:3:2])
-                            else:
-                                break
-                        
-                        # Adding the lenght of the different tracks to a dictionary
-                        len_of_tracks[index] = len(track_pos) 
-                        try:
-                            temp2 = len_of_tracks[index]
-                        except KeyError:
-                            temp2 = None
-                        # Checking if the length from last iteration is equal
-                        # If it is equal, that means we have no new data to add to this track, 
-                        # and it should thefore not be plotted.
-                        if temp1 == temp2:
-                            plot_away = False
-                        
-                        if plot_away:
-                            # Need to check if we have any elemnts to plot
-                            if track_pos:
-                                track_pos = np.array(track_pos)
-                                # plotting only the last two elemnts, since the others have been plottet previos
-                                line, = self.ax.plot(track_pos[len(track_pos)-2:,0], track_pos[len(track_pos)-2:,2], color=selected_color, lw=1,ls="-")
-
-                            if self.add_covariance_ellipses:
-                                if ellipse_center:
-                                    edgecolor = matplotlib.colors.colorConverter.to_rgba(selected_color, alpha=0)
-                                    facecolor = matplotlib.colors.colorConverter.to_rgba(selected_color, alpha=0.16)
-                                    # Plotting the last element in the ellipse_center list since the others have been plottet earlier
-                                    covariance_ellipse = get_ellipse(ellipse_center[-1], ellipse_sigma[-1])
-                                    self.ax.add_patch(PolygonPatch(covariance_ellipse, facecolor = facecolor, edgecolor = edgecolor))
-
-                self.ax.set_title(f"Time: {timestamp[0]}")
-                self.fig.savefig(f'/home/{username}/Documents/data_mradmin/tracking_results/videos/temp/tracker_{i+1}.png',dpi=100)
-                bar.update(i)
-
-        photos_file_path = f"/home/{username}/Documents/data_mradmin/tracking_results/videos/temp"
-        video_name = f'{photos_file_path[:-4]}{self.filename}.avi'
-        images_to_video_opencv(photos_file_path, video_name, fps=10)
-        print(f"Saving {video_name.split('/')[-1]}")
-        empty_folder(photos_file_path)
 
 def plot_measurements(filename,measurements_all, ax, timestamps, marker_size=5):
     cmap = get_cmap('Greys')

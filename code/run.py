@@ -1,8 +1,3 @@
-from tracking import constructs, utilities, filters, models, initiators, terminators, managers, associators, trackers
-from parameters import tracker_params, measurement_params, process_params, tracker_state
-from check_start_and_stop import CountMatrix
-
-import import_data
 import import_radar_data
 import plotting
 import video
@@ -11,7 +6,16 @@ import os
 import glob
 import datetime
 
-username = os.getenv('USERNAME') if os.name == 'nt' else os.getenv('USER')
+import utilities.utilities as utilities
+import utilities.merged_measurements.merged_measurement as merged_measurement
+from utilities.multi_target.multi_target_scenarios import multi_target_scenarios
+from utilities.check_start_and_stop import CountMatrix
+
+from parameters import tracker_params, measurement_params, process_params, tracker_state
+from tracking import constructs, utilities, filters, models, initiators, terminators, managers, associators, trackers
+
+
+#username = os.getenv('USERNAME') if os.name == 'nt' else os.getenv('USER')
 
 def setup_manager():
     if IMM_off:
@@ -65,232 +69,92 @@ def setup_manager():
 
     track_manager = managers.Manager(tracker, track_initiation, track_terminator, tracker_params['conf_threshold'])
     return track_manager
-
-def make_new_directory():
-    # Making new directory for the results
     
-    root = f"/home/{username}/Documents/radar_tracker/tracking_results"
-    todays_date = datetime.datetime.now().strftime("%d-%b")
-    path = os.path.join(root,todays_date)
-    if not os.path.exists(path):
-        os.mkdir(path)
-    return path
-
-def read_out_txt_file(root):
-    txt_file = glob.glob(os.path.join(root, '*.txt'))
-    timestamps = []
-    with open(txt_file[0], 'r') as f:
-        lines = f.readlines()
-        for line in lines:
-            timestamps.append(line.split()[0])
-    return timestamps        
-
-def remove_files(root,path_list,counter):
-    files_to_be_skipped = read_out_txt_file(root)
-    counter_local = 0
-    path_list_copy = path_list.copy()
-    for file in path_list_copy:
-        date_of_file = file.split('/')[-1].split('.')[0].split('_')[-1]
-        for timestamp in files_to_be_skipped:
-            if date_of_file == timestamp:
-                try:
-                    path_list.remove(file)
-                    counter += 1
-                    counter_local += 1
-                except:
-                    print(f"File {file} not in list")
-                    pass
-                
-    print(f"Removed {counter_local} files of {len(files_to_be_skipped)} files given by the txt file")
-    return counter
-
-def check_timegaps(timestamps):
-    time_gaps = []
-    for k in range(len(timestamps)-1):
-        time_gap = timestamps[k+1]-timestamps[k]
-        time_gaps.append(time_gap)
-
-    time_gap = np.mean(time_gaps)
-    for k in range(len(time_gaps)):
-        if  not (0.8*time_gap < time_gaps[k][0] < 1.2*time_gap):
-            print(f"Time gap are not consistent, time gap {time_gaps[k][0]:.2f} at index {k}")
-    print(f"Time gap between measurements = {time_gap:.2f}\n")
-
-def save_measurements(measurements,timestamps):
-    measurement_dict = {}
-    for k, (measurement_set, timestamp) in enumerate(zip(measurements, timestamps)):
-        measurement_set = list(measurement_set)
-
-        if measurement_set:
-            for measurement in measurement_set:
-                if not timestamp[0] in measurement_dict:
-                    measurement_dict[timestamp[0]] = [[measurement.mean[0],measurement.mean[1]]]
-                else:
-                    measurement_dict[timestamp[0]].append([measurement.mean[0],measurement.mean[1]])
-        else:
-            measurement_dict[timestamp[0]] = []
-    np.save(f"/home/{username}/Documents/radar_tracker/data/measurements_after_importing.npy",measurement_dict)
-    
-def check_lenght_of_tracks(track_history):
-    track_lengths_dict = {}
-    for track in track_history.items():
-        first_mean, cov = track[1][0].posterior
-        last_mean, cov = track[1][-1].posterior
-        first_point = (first_mean[0],first_mean[2])
-        last_point = (last_mean[0],last_mean[2])
-        track_length = np.sqrt((first_point[0]-last_point[0])**2 + (first_point[1]-last_point[1])**2)
-        #print(f"lenght of track {track[0]} = {track_length:.2f}") 
-        track_lengths_dict[track[0]] = track_length
-    return track_lengths_dict
-
-def check_coherence_factor(track_history,coherence_factor=0.75):
-    not_valid_tracks = []
-    for track in track_history.items():
-        u = []
-        v = []
-        last_mean, cov = track[1][0].posterior
-        for k,track_point in enumerate(track[1]):
-            if k == 0:
-                continue
-            mean, cov = track_point.posterior
-            u.append([[mean[0]-last_mean[0]],[mean[2]-last_mean[2]]])
-            v.append([mean[1],mean[3]])
-            last_mean = mean
-        u = np.array(u)
-        v = np.array(v)
-
-        ck = 0
-        for k in range(1,len(u)):
-            c_k = np.dot(np.transpose(v[k]),u[k])/(np.linalg.norm(u[k])*np.linalg.norm(v[k]))
-            ck += c_k[0]
-        print(f"Coherence factor for track {track[0]} = {ck/len(u):.2f}\n")
-        if ck/len(u) < coherence_factor:
-            not_valid_tracks.append(track[0])
-
-    print(f"Tracks with to low coherence factor: {not_valid_tracks}\n")
-    return not_valid_tracks
-
-def print_current_tracks(track_history):
-    print(f"Number of tracks = {len(track_history)}")
-    for key, value in track_history.items():
-        print(f"Track {key}")
-    print("\n")
-
 if __name__ == '__main__':
     """
     All tracker parameters are imported from parameters.py, and can be changed
     there.
     """
     # make new directory with the current date to save results
-    dir_name = make_new_directory()
+    dir_name = utilities.make_new_directory()
 
     # turn off tracker functionality
     IMM_off = tracker_state["IMM_off"]
     single_target = tracker_state["single_target"]
     visibility_off = tracker_state["visibility_off"]
 
+    # turn on/off different functionalities
     # 1: True, 0: False
     plot_statement = 1
+    relative_to_map = 0
     video_statement = 0
     remove_track_with_low_coherence_factor = 1
-
+    check_for_multi_target_scenarios = 0
+    check_for_merged_measurements = 0
     counting_matrix = 0
-    reset_count_matrix = False
+    reset_count_matrix = 0
     
     # Define count matrix
     if counting_matrix:
         count_matrix = CountMatrix(reset=reset_count_matrix)
 
     ### Import data ###
-    #root = "/home/aflaptop/Documents/data_mradmin/json_files/data_aug_15-18/"
-    root = f"/home/{username}/Documents/radar_data/data_aug_18-19"
-    #root = "/home/aflaptop/Documents/data_mradmin/json_files/data_aug_22-23"
-    #root = "/home/aflaptop/Documents/data_mradmin/json_files/data_sep_8-9-11-14"
+    # root = "/home/aflaptop/Documents/radar_data/data_aug_15-18"
+    root = "/home/aflaptop/Documents/radar_data/data_aug_18-19"
+    # root = "/home/aflaptop/Documents/radar_data/data_aug_22-23"
+    # root = "/home/aflaptop/Documents/radar_data/data_aug_25-26-27"
+    # root = "/home/aflaptop/Documents/radar_data/data_aug_28-29-30-31"
+    # root = "/home/aflaptop/Documents/radar_data/data_sep_1-2-3-4-5-6-7"
+    # root = "/home/aflaptop/Documents/radar_data/data_sep_8-9-11-14"
+    # root = "/home/aflaptop/Documents/radar_data/data_sep_17-18-19-24"
     path_list = glob.glob(os.path.join(root, '*.json'))
 
-    # path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_15-18/rosbag_2023-08-15-13-33-24.json"]
-    # path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_15-18/rosbag_2023-08-18-13-06-49.json"]
-    # path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-18-13-30-58.json"]
-    # path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-18-13-32-36.json"]
-    # path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_sep_8-9-11-14/rosbag_2023-09-09-13-47-42.json"]
-    # path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_sep_8-9-11-14/rosbag_2023-09-08-17-00-11.json"]
-    # path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_sep_8-9-11-14/rosbag_2023-09-11-12-03-28.json"]
-    # path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_sep_8-9-11-14/rosbag_2023-09-09-13-15-23.json"]
-    # path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-18-14-57-38.json"]
-    #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-18-16-20-33.json"]
-    #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-19-11-18-46.json"]
-    #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-18-17-18-06.json"]
-    #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-19-16-18-26.json"]
-    #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-19-15-09-57.json"]
-    #path_list = ["/home/aflaptop/Documents/data_mradmin/json_files/data_aug_18-19/rosbag_2023-08-18-14-52-55.json"]
-    path_list = [f"/home/{username}/Documents/radar_data/data_aug_18-19/rosbag_2023-08-18-15-30-32.json"]
-    path_list = [f"/home/{username}/Documents/radar_data/data_aug_18-19/rosbag_2023-08-19-16-49-34.json"]
+    # path_list = []
+    # with open("multi_target_scenarios.txt", "r") as f:
+    #     files = f.readlines()
+    #     for file in files:
+    #         path_list.append(os.path.join(root,file.strip()))
 
+    path_list = ["/home/aflaptop/Documents/radar_data/data_aug_18-19/rosbag_2023-08-19-15-23-30.json"]
+    path_list = ["/home/aflaptop/Documents/radar_data/data_aug_18-19/rosbag_2023-08-18-15-30-32.json"]
+    number_of_multiple_target_scenarios = 0
     for i,filename in enumerate(path_list):
         if True:
             print(f'File number {i+1} of {len(path_list)}')
             print(f"Curent file: {os.path.basename(filename)}\n")
 
             # read out data
-            measurements, ownship, timestamps = import_radar_data.radar_data_json_file(filename)
-        
-            # Check time gap between measurements
-            check_timegaps(timestamps)
+            measurements, ownship, timestamps = import_radar_data.radar_data_json_file(filename,relative_to_map=relative_to_map)
 
-            # Save measurements
-            # save_measurements(measurements,timestamps)
-            
             # Check i there are any measurements in the file
             if len(measurements) == 0:
                 print("No measurements in file")
                 continue
 
+            # Check time gap between measurements
+            utilities.check_timegaps(timestamps)
 
             # define tracker evironment
             manager = setup_manager()
             
-
             # run tracker
             for k, (measurement_set, timestamp, radar) in enumerate(zip(measurements, timestamps, *ownship.values())):
                 #print(f'Timestep {k}:')
                 manager.step(measurement_set, float(timestamp), ownship=radar)
                 #print(f'Active tracks: {np.sort([track.index for track in manager.tracks])}\n')
 
-
-            # Check lenght of tracks
-            #check_lenght_of_tracks(manager.track_history)
-            
             
             # Calculate coherence factor 
-            unvalid_tracks = check_coherence_factor(manager.track_history,coherence_factor=0.75)
+            unvalid_tracks = utilities.check_coherence_factor(manager.track_history,coherence_factor=0.75)
 
             # Check speed of tracks
-            track_lengths_dict = check_lenght_of_tracks(manager.track_history)
-            for track in manager.track_history.items():
-                track_id = track[0]
-                track_start_time = track[1][0].timestamp
-                track_end_time = track[1][-1].timestamp
-                track_time = track_end_time - track_start_time
-                track_speed = track_lengths_dict[track_id]/track_time
-                track_speed_knots = 1.94384449*track_speed
-                print(f"Speed of track {track_id} = {track_speed_knots:.2f} knots")
-                if track_speed_knots > 6 and track_id not in unvalid_tracks:
-                    unvalid_tracks.append(track_id)
-            
-            #print(f"Track lengths: {track_lengths_dict}\n")
-            for track_length in track_lengths_dict.items():
-                if track_length[1] < 10 and track_length[0] not in unvalid_tracks:
-                    unvalid_tracks.append(track_length[0])
+            unvalid_tracks, track_lengths_dict = utilities.check_speed_of_tracks(unvalid_tracks, manager.track_history)
 
-            # unvalid_tracks = []
-            # for track in manager.track_history.items():
-            #     track_id = track[0]
-            #     if track_id != 7:
-            #         unvalid_tracks.append(track_id)
-            # print(f"Unvalid tracks: {unvalid_tracks}\n")
+            # check for to short tracks
+            unvalid_tracks = utilities.check_lenght_of_tracks(unvalid_tracks, track_lengths_dict)
                     
             # Print current tracks
-            print_current_tracks(manager.track_history)
+            utilities.print_current_tracks(manager.track_history)
 
             # Remove unvalid tracks
             if remove_track_with_low_coherence_factor:
@@ -299,24 +163,42 @@ if __name__ == '__main__':
             
                 # Print current tracks
                 print("After removing tracks with low coherence factor")
-                print_current_tracks(manager.track_history)
+                utilities.print_current_tracks(manager.track_history)
 
+
+            if check_for_merged_measurements and remove_track_with_low_coherence_factor and not relative_to_map:
+                measurement_dict, track_dict = merged_measurement.create_dict(filename, manager.track_history)
+                merged_measurement.merged_measurements(plot_scenarios=True)
            
-                
+            # Check for multi-target scenarios
+            if check_for_multi_target_scenarios and remove_track_with_low_coherence_factor and not relative_to_map:
+                if multi_target_scenarios(manager.track_history):
+                    number_of_multiple_target_scenarios += 1
+                    with open("/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt", "a") as f:
+                        f.write(os.path.basename(filename) + "\n")
+                    #print(f"Number of multiple target scenarios: {number_of_multiple_target_scenarios}\n")
+
+                print(f"Number of multiple target scenarios: {number_of_multiple_target_scenarios}\n")
+                    
 
             # Video vs image
             if plot_statement:
                 # plotting
-                plot = plotting.ScenarioPlot(measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
-                plot.create_with_map(measurements, manager.track_history, ownship, timestamps)
-            
+                if relative_to_map:
+                    plot = plotting.ScenarioPlot(measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
+                    plot.create_with_map(measurements, manager.track_history, ownship, timestamps)
+                else:
+                    plot = plotting.ScenarioPlot(measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
+                    plot.create(measurements, manager.track_history, ownship, timestamps)
+                
             if video_statement:
                 inp = input("Do you want to create a video? (y/n): ")
                 if inp == "y":
-                    video_manager = video.Video(add_covariance_ellipses=True, gamma=1, filename=filename, dir_name=dir_name,resolution=100,fps=1)
+                    video_manager = video.Video(add_covariance_ellipses=True, gamma=1, filename=filename,resolution=100,fps=1)
                     video_manager.create_video(measurements, manager.track_history, ownship, timestamps)
                 else:
                     print("No video created")
+
             if counting_matrix:
                 # Check start and stop of tracks
                 count_matrix.check_start_and_stop(track_history=manager.track_history,filename=filename)
