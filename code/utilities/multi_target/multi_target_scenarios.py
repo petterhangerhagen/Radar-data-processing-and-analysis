@@ -1,10 +1,12 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 from shapely.geometry.point import Point
 from shapely import affinity
 from shapely.geometry import Polygon
 from descartes import PolygonPatch
+import shutil
+import os
+import re
 
 def multi_target_scenarios(track_history):
     threshold_distance = 20
@@ -75,6 +77,30 @@ def multi_target_scenarios(track_history):
                         return True
     return False
 
+def move_plot_to_this_directory(filename, dirname):
+    source_dir = dirname
+    destaination_dir = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_plots"
+    partial_file_name = os.path.basename(filename)
+    partial_file_name = partial_file_name.split(".")[0]
+    partial_file_name = partial_file_name.split("_")[-1]
+
+    files_in_dir = os.listdir(source_dir)
+    # Find the matching file
+    # Initialize an empty list to store matching files
+    matching_files = []
+
+    # Loop through each file in the directory
+    for file in files_in_dir:
+        # Check if the file matches the pattern
+        if re.match(f"{partial_file_name}.*\\.png", file):
+            # If it matches, add it to the list of matching files
+            matching_files.append(file)
+            
+    for file in matching_files:
+        shutil.copy(os.path.join(source_dir, file), destaination_dir)
+
+
+
 def create_dict(track_history):
         track_dict = {}
         track_dict["Info"] = ["Track index","x","y","covariance"]
@@ -103,3 +129,8 @@ def get_ellipse(center, Sigma, gamma=1):
     ellipse = affinity.rotate(non_rotated_ellipse, rotation)
     edge = np.array(ellipse.exterior.coords.xy)
     return Polygon(edge.T)
+
+if __name__ == "__main__":
+    dir_name = "/home/aflaptop/Documents/radar_tracking_results/20-Feb"
+    file_name = "/home/aflaptop/Documents/radar_data/data_sep_8-9-11-14/rosbag_2023-09-09-11-05-32.json"
+    move_plot_to_this_directory(file_name, dir_name)

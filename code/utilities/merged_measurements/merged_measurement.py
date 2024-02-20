@@ -2,11 +2,11 @@ import scipy.io as io
 import numpy as np
 from tracking import constructs
 from parameters import measurement_params
-import csv
 import json
 import matplotlib.pyplot as plt
 from matplotlib.cm import get_cmap
 from matplotlib.patches import Polygon
+import os
 
 class CloseMeasurementsPair:
     """
@@ -149,7 +149,7 @@ def create_dict(filename, track_history):
         return measurement_dict, track_dict
 
 
-def merged_measurements(plot_scenarios=False):
+def merged_measurements(filename,track_history, plot_scenarios=False, return_true_or_false=True):
     """
     Function for finding and visualizing the merged measurements.
     The function reads out the measurement dictionary and finds all measurements which are close to each other at the same timestamp.
@@ -199,7 +199,11 @@ def merged_measurements(plot_scenarios=False):
         ax.set_ylim(-140,10)
         draw_polygon(vertices,ax)
     
-
+    print("############### Merged measurements ###############")
+    if len(track_history.items()) < 3:
+        print("Only one track, no measurements to merge")
+        return False
+    
     number_of_merged_measurements = 0
     merged_measurements_dict = {}
     for k, (timestamp, close_measurement_pair_list) in enumerate(close_measurements_dict.items()):
@@ -209,6 +213,8 @@ def merged_measurements(plot_scenarios=False):
         for i in range(len(close_measurement_pair_list)):
             close_measurement_pair = close_measurement_pair_list[i]
 
+            if timestamp_index == len(timestamps)-1:
+                continue
             next_timestamp = timestamps[timestamp_index+1]
             next_measurements = data[next_timestamp]
             
@@ -225,6 +231,7 @@ def merged_measurements(plot_scenarios=False):
                 # and the area of the next measurement is larger than the sum of the areas of the close measurements, then the measurements are merged.
                 if max(distances) < 20:
                     if next_measurement[2] > sum(areas):
+
                         number_of_merged_measurements += 1
                         merged_measurement = MergeMeasurements(close_measurement_pair, next_timestamp ,next_measurement)
                         if plot_scenarios:
@@ -236,10 +243,29 @@ def merged_measurements(plot_scenarios=False):
                         print("Merged measurement")
                         print(close_measurement_pair)
                         print("\n")
-                   
+                    
+    
     print(f"Number of merged measurements: {number_of_merged_measurements}")
     if plot_scenarios:
-        plt.show()
+        if number_of_merged_measurements > 0:
+            #plt.show()
+            file_name = os.path.basename(filename)
+            file_name = os.path.splitext(file_name)[0]
+            #print(f"File name: {file_name}")
+            save_path = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements_plots"
+            save_path = os.path.join(save_path,file_name + ".png")
+            print(f"Saving plot to {save_path}")
+            #temp_in = input("Continue?")
+            plt.savefig(save_path)
+            
+    plt.close()
+
+    print("##################################################")
+    if return_true_or_false:
+        if number_of_merged_measurements > 0:
+            return True
+        else:
+            return False
 
 
 def draw_polygon(vertices,ax):

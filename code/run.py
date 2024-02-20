@@ -6,10 +6,10 @@ import os
 import glob
 import datetime
 
-import utilities.utilities as utilities
 import utilities.merged_measurements.merged_measurement as merged_measurement
-from utilities.multi_target.multi_target_scenarios import multi_target_scenarios
+from utilities.multi_target.multi_target_scenarios import multi_target_scenarios, move_plot_to_this_directory
 from utilities.check_start_and_stop import CountMatrix
+import utilities.utilities as util
 
 from parameters import tracker_params, measurement_params, process_params, tracker_state
 from tracking import constructs, utilities, filters, models, initiators, terminators, managers, associators, trackers
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     there.
     """
     # make new directory with the current date to save results
-    dir_name = utilities.make_new_directory()
+    dir_name = util.make_new_directory()
 
     # turn off tracker functionality
     IMM_off = tracker_state["IMM_off"]
@@ -85,39 +85,52 @@ if __name__ == '__main__':
 
     # turn on/off different functionalities
     # 1: True, 0: False
-    plot_statement = 1
+    plot_statement = 0
     relative_to_map = 0
     video_statement = 0
     remove_track_with_low_coherence_factor = 1
     check_for_multi_target_scenarios = 0
     check_for_merged_measurements = 0
-    counting_matrix = 0
-    reset_count_matrix = 0
+    counting_matrix = 1
+    reset_count_matrix = 1
     
     # Define count matrix
     if counting_matrix:
         count_matrix = CountMatrix(reset=reset_count_matrix)
 
     ### Import data ###
+    ## All data
+    root = "/home/aflaptop/Documents/radar_data/"
+    path_list = glob.glob(os.path.join(root,'**' ,'*.json'))
+
+    ## Specific data
     # root = "/home/aflaptop/Documents/radar_data/data_aug_15-18"
-    root = "/home/aflaptop/Documents/radar_data/data_aug_18-19"
+    # root = "/home/aflaptop/Documents/radar_data/data_aug_18-19"
     # root = "/home/aflaptop/Documents/radar_data/data_aug_22-23"
     # root = "/home/aflaptop/Documents/radar_data/data_aug_25-26-27"
     # root = "/home/aflaptop/Documents/radar_data/data_aug_28-29-30-31"
     # root = "/home/aflaptop/Documents/radar_data/data_sep_1-2-3-4-5-6-7"
     # root = "/home/aflaptop/Documents/radar_data/data_sep_8-9-11-14"
     # root = "/home/aflaptop/Documents/radar_data/data_sep_17-18-19-24"
-    path_list = glob.glob(os.path.join(root, '*.json'))
+    # path_list = glob.glob(os.path.join(root, '*.json'))
 
     # path_list = []
-    # with open("multi_target_scenarios.txt", "r") as f:
+    # with open("/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt", "r") as f:
     #     files = f.readlines()
     #     for file in files:
     #         path_list.append(os.path.join(root,file.strip()))
 
-    path_list = ["/home/aflaptop/Documents/radar_data/data_aug_18-19/rosbag_2023-08-19-15-23-30.json"]
-    path_list = ["/home/aflaptop/Documents/radar_data/data_aug_18-19/rosbag_2023-08-18-15-30-32.json"]
+    # path_list = []
+    # with open("/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt", "r") as f:
+    #     files = f.readlines()
+    #     for file in files:
+    #         path_list.append(os.path.join(root,file.strip()))
+
+    #path_list = ["/home/aflaptop/Documents/radar_data/data_aug_18-19/rosbag_2023-08-19-15-23-30.json"]
+    #path_list = ["/home/aflaptop/Documents/radar_data/data_aug_18-19/rosbag_2023-08-18-15-30-32.json"]
+   # path_list = ["/home/aflaptop/Documents/radar_data/data_sep_8-9-11-14/rosbag_2023-09-09-15-08-02.json"]
     number_of_multiple_target_scenarios = 0
+    number_of_merged_measurements_scenarios = 0
     for i,filename in enumerate(path_list):
         if True:
             print(f'File number {i+1} of {len(path_list)}')
@@ -132,7 +145,7 @@ if __name__ == '__main__':
                 continue
 
             # Check time gap between measurements
-            utilities.check_timegaps(timestamps)
+            util.check_timegaps(timestamps)
 
             # define tracker evironment
             manager = setup_manager()
@@ -145,16 +158,16 @@ if __name__ == '__main__':
 
             
             # Calculate coherence factor 
-            unvalid_tracks = utilities.check_coherence_factor(manager.track_history,coherence_factor=0.75)
+            unvalid_tracks = util.check_coherence_factor(manager.track_history,coherence_factor=0.75)
 
             # Check speed of tracks
-            unvalid_tracks, track_lengths_dict = utilities.check_speed_of_tracks(unvalid_tracks, manager.track_history)
+            unvalid_tracks, track_lengths_dict = util.check_speed_of_tracks(unvalid_tracks, manager.track_history)
 
             # check for to short tracks
-            unvalid_tracks = utilities.check_lenght_of_tracks(unvalid_tracks, track_lengths_dict)
+            unvalid_tracks = util.check_lenght_of_tracks(unvalid_tracks, track_lengths_dict)
                     
             # Print current tracks
-            utilities.print_current_tracks(manager.track_history)
+            util.print_current_tracks(manager.track_history)
 
             # Remove unvalid tracks
             if remove_track_with_low_coherence_factor:
@@ -163,23 +176,18 @@ if __name__ == '__main__':
             
                 # Print current tracks
                 print("After removing tracks with low coherence factor")
-                utilities.print_current_tracks(manager.track_history)
+                util.print_current_tracks(manager.track_history)
 
-
+            # Check for merged measurements
             if check_for_merged_measurements and remove_track_with_low_coherence_factor and not relative_to_map:
                 measurement_dict, track_dict = merged_measurement.create_dict(filename, manager.track_history)
-                merged_measurement.merged_measurements(plot_scenarios=True)
-           
-            # Check for multi-target scenarios
-            if check_for_multi_target_scenarios and remove_track_with_low_coherence_factor and not relative_to_map:
-                if multi_target_scenarios(manager.track_history):
-                    number_of_multiple_target_scenarios += 1
-                    with open("/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt", "a") as f:
-                        f.write(os.path.basename(filename) + "\n")
-                    #print(f"Number of multiple target scenarios: {number_of_multiple_target_scenarios}\n")
 
-                print(f"Number of multiple target scenarios: {number_of_multiple_target_scenarios}\n")
-                    
+                if merged_measurement.merged_measurements(filename, manager.track_history, plot_scenarios=True, return_true_or_false=True):
+                    number_of_merged_measurements_scenarios += 1
+                    with open("/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt", "a") as f:
+                       f.write(os.path.basename(filename) + "\n")
+                print(f"Number of merged measurement scenarios: {number_of_merged_measurements_scenarios}\n")
+    
 
             # Video vs image
             if plot_statement:
@@ -203,11 +211,25 @@ if __name__ == '__main__':
                 # Check start and stop of tracks
                 count_matrix.check_start_and_stop(track_history=manager.track_history,filename=filename)
 
-    # if counting_matrix:
-    #     unvalidated_tracks = {"Number of tracks": count_matrix.number_of_tracks,"Unvalidated tracks": count_matrix.unvalidated_track}
-    #     np.save("/home/aflaptop/Documents/radar_tracker/data/unvalidated_tracks.npy",unvalidated_tracks)
-    #     files_with_tracks_on_diagonal = {"Number of tracks on diagonal":count_matrix.number_of_tracks_on_diagonal,"Files":count_matrix.files_with_tracks_on_diagonal}
-    #     np.save("/home/aflaptop/Documents/radar_tracker/data/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
 
+             # Check for multi-target scenarios
+            if check_for_multi_target_scenarios and remove_track_with_low_coherence_factor and not relative_to_map:
+                if multi_target_scenarios(manager.track_history):
+                    number_of_multiple_target_scenarios += 1
+                    with open("/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt", "a") as f:
+                        f.write(os.path.basename(filename) + "\n")
+                    if plot_statement:
+                        move_plot_to_this_directory(filename, dir_name)
+                    #print(f"Number of multiple target scenarios: {number_of_multiple_target_scenarios}\n")
 
+                print(f"Number of multi-target scenarios: {number_of_multiple_target_scenarios}\n")
+                    
+
+    if counting_matrix:
+        unvalidated_tracks = {"Number of tracks": count_matrix.number_of_tracks,"Unvalidated tracks": count_matrix.unvalidated_track}
+        #np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/unvalidated_tracks.npy",unvalidated_tracks)
+        files_with_tracks_on_diagonal = {"Number of tracks on diagonal":count_matrix.number_of_tracks_on_diagonal,"Files":count_matrix.files_with_tracks_on_diagonal}
+        #np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
+        count_matrix.track_average_length()
+        #print(f"average length matrix: {count_matrix.average_length_matrix}\n")
     

@@ -111,6 +111,13 @@ class CountMatrix:
         self.number_of_tracks = 0
         self.number_of_tracks_on_diagonal = 0
         self.files_with_tracks_on_diagonal = []
+
+        self.average_length_matrix_filename = "/home/aflaptop/Documents/radar_tracker/code/npy_files/average_length_matrix.npy"
+        self.average_length_matrix = np.load(self.average_length_matrix_filename)
+        if reset:
+            #print("Resetting average lenght matrix")
+            self.average_length_matrix = np.zeros((6,6))
+        
         
     def check_start_and_stop(self,track_history,filename=None):
         rectangleA = RectangleA()
@@ -128,26 +135,42 @@ class CountMatrix:
             y_start = track_history[index][0].posterior[0][2]
             x_stop = track_history[index][-1].posterior[0][0]
             y_stop = track_history[index][-1].posterior[0][2]
+            distance = np.sqrt((x_start-x_stop)**2 + (y_start-y_stop)**2)
             for rectangle in rectangles:
                 # Start
                 if rectangle.start_or_stop(x_start,y_start):
-                    start_rectangle[index] = rectangle
+                    start_rectangle[index] = [rectangle,distance]
+                    print
                 # Stop
                 if rectangle.start_or_stop(x_stop,y_stop):
-                    stop_rectangle[index] = rectangle
+                    stop_rectangle[index] = [rectangle,distance]
             
             if index not in start_rectangle.keys() or index not in stop_rectangle.keys():
                 self.unvalidated_track += 1
-            
+        
+        #print(start_rectangle)
+        #print("\n")
+        #print(stop_rectangle)
         
         for start_key in start_rectangle.keys():
             if start_key in stop_rectangle.keys():
-                self.count_matrix[start_rectangle[start_key].index][stop_rectangle[start_key].index] += 1
+                #print(start_rectangle[start_key][0])
+                #print(stop_rectangle[start_key][1])
+                self.count_matrix[start_rectangle[start_key][0].index][stop_rectangle[start_key][0].index] += 1
+                self.average_length_matrix[start_rectangle[start_key][0].index][stop_rectangle[start_key][0].index] += start_rectangle[start_key][1]
                 if start_rectangle[start_key].index == stop_rectangle[start_key].index:
                     self.number_of_tracks_on_diagonal += 1
                     self.files_with_tracks_on_diagonal.append(filename.split("/")[-1])
 
         np.save(self.file_name, self.count_matrix)
+        np.save(self.average_length_matrix_filename, self.average_length_matrix)
+
+    def track_average_length(self):
+        for k in range(6):
+            for j in range(6):
+                if self.count_matrix[k][j] != 0 and self.average_length_matrix[k][j] != 0:
+                    self.average_length_matrix[k][j] = int(self.average_length_matrix[k][j]/self.count_matrix[k][j])
+        np.save(self.average_length_matrix_filename, self.average_length_matrix)
 
 
 def plot_rectangles():

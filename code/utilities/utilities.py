@@ -5,7 +5,6 @@ import numpy as np
 
 def make_new_directory():
     # Making new directory for the results
-    
     root = "/home/aflaptop/Documents/radar_tracking_results"
     todays_date = datetime.datetime.now().strftime("%d-%b")
     path = os.path.join(root,todays_date)
