@@ -8,7 +8,9 @@ import datetime
 
 import utilities.merged_measurements.merged_measurement as merged_measurement
 from utilities.multi_target.multi_target_scenarios import multi_target_scenarios, move_plot_to_this_directory
+from utilities.multi_path.multi_path import check_for_multi_path
 from utilities.check_start_and_stop import CountMatrix
+from utilities.check_start_and_stop import RectangleA, RectangleB, RectangleC, RectangleD, RectangleE, RectangleF
 import utilities.utilities as util
 
 from parameters import tracker_params, measurement_params, process_params, tracker_state
@@ -91,46 +93,67 @@ if __name__ == '__main__':
     remove_track_with_low_coherence_factor = 1
     check_for_multi_target_scenarios = 0
     check_for_merged_measurements = 0
-    counting_matrix = 1
-    reset_count_matrix = 1
+    check_for_multi_path_scenarios = 1
+    counting_matrix = 0
+    reset_count_matrix = 0
     
     # Define count matrix
     if counting_matrix:
         count_matrix = CountMatrix(reset=reset_count_matrix)
 
     ### Import data ###
+    import_selection = 4
+
     ## All data
-    root = "/home/aflaptop/Documents/radar_data/"
-    path_list = glob.glob(os.path.join(root,'**' ,'*.json'))
+    if import_selection == 0:
+        root = "/home/aflaptop/Documents/radar_data/"
+        path_list = glob.glob(os.path.join(root,'**' ,'*.json'))
 
     ## Specific data
-    # root = "/home/aflaptop/Documents/radar_data/data_aug_15-18"
-    # root = "/home/aflaptop/Documents/radar_data/data_aug_18-19"
-    # root = "/home/aflaptop/Documents/radar_data/data_aug_22-23"
-    # root = "/home/aflaptop/Documents/radar_data/data_aug_25-26-27"
-    # root = "/home/aflaptop/Documents/radar_data/data_aug_28-29-30-31"
-    # root = "/home/aflaptop/Documents/radar_data/data_sep_1-2-3-4-5-6-7"
-    # root = "/home/aflaptop/Documents/radar_data/data_sep_8-9-11-14"
-    # root = "/home/aflaptop/Documents/radar_data/data_sep_17-18-19-24"
-    # path_list = glob.glob(os.path.join(root, '*.json'))
+    elif import_selection == 1:
+        # root = "/home/aflaptop/Documents/radar_data/data_aug_15-18"
+        root = "/home/aflaptop/Documents/radar_data/data_aug_18-19"
+        # root = "/home/aflaptop/Documents/radar_data/data_aug_22-23"
+        # root = "/home/aflaptop/Documents/radar_data/data_aug_25-26-27"
+        # root = "/home/aflaptop/Documents/radar_data/data_aug_28-29-30-31"
+        # root = "/home/aflaptop/Documents/radar_data/data_sep_1-2-3-4-5-6-7"
+        # root = "/home/aflaptop/Documents/radar_data/data_sep_8-9-11-14"
+        # root = "/home/aflaptop/Documents/radar_data/data_sep_17-18-19-24"
+        path_list = glob.glob(os.path.join(root, '*.json'))
+    
 
-    # path_list = []
-    # with open("/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt", "r") as f:
-    #     files = f.readlines()
-    #     for file in files:
-    #         path_list.append(os.path.join(root,file.strip()))
+    # Multi target scenarios
+    elif import_selection == 2:
+        root = "/home/aflaptop/Documents/radar_data/"
+        txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt"
+        path_list = util.find_files(root,txt_filename)
+        
 
-    # path_list = []
-    # with open("/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt", "r") as f:
-    #     files = f.readlines()
-    #     for file in files:
-    #         path_list.append(os.path.join(root,file.strip()))
+    # Merged measurements
+    elif import_selection == 3:
+        root = "/home/aflaptop/Documents/radar_data/"
+        txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt"
+        path_list = util.find_files(root,txt_filename)
+        
 
-    #path_list = ["/home/aflaptop/Documents/radar_data/data_aug_18-19/rosbag_2023-08-19-15-23-30.json"]
-    #path_list = ["/home/aflaptop/Documents/radar_data/data_aug_18-19/rosbag_2023-08-18-15-30-32.json"]
-   # path_list = ["/home/aflaptop/Documents/radar_data/data_sep_8-9-11-14/rosbag_2023-09-09-15-08-02.json"]
+    # Multi path scenarios
+    elif import_selection == 4:
+        root = "/home/aflaptop/Documents/radar_data/"
+        txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_scenarios.txt"
+        path_list = util.find_files(root,txt_filename)
+
+
+    # Specific file
+    elif import_selection == 5:
+        path_list = ["/home/aflaptop/Documents/radar_data/data_sep_17-18-19-24/rosbag_2023-09-17-15-57-01.json"]
+    
+    # Empty list
+    else: 
+        path_list = []
+
     number_of_multiple_target_scenarios = 0
     number_of_merged_measurements_scenarios = 0
+    number_of_multi_path_scenarios = 0
     for i,filename in enumerate(path_list):
         if True:
             print(f'File number {i+1} of {len(path_list)}')
@@ -198,6 +221,15 @@ if __name__ == '__main__':
                 else:
                     plot = plotting.ScenarioPlot(measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
                     plot.create(measurements, manager.track_history, ownship, timestamps)
+            
+                # rectangleA = RectangleA()
+                # rectangleB = RectangleB()
+                # rectangleC = RectangleC()
+                # rectangleD = RectangleD()
+                # rectangleE = RectangleE()
+                # rectangleF = RectangleF()
+                # rectangles = [rectangleA,rectangleB,rectangleC,rectangleD,rectangleE,rectangleF] 
+                # plotting.plot_only_map(rectangles)
                 
             if video_statement:
                 inp = input("Do you want to create a video? (y/n): ")
@@ -223,13 +255,35 @@ if __name__ == '__main__':
                     #print(f"Number of multiple target scenarios: {number_of_multiple_target_scenarios}\n")
 
                 print(f"Number of multi-target scenarios: {number_of_multiple_target_scenarios}\n")
-                    
 
+            # if i==0:
+            #     util.histogram_of_tracks_duration(manager.track_history,reset=True)
+            # else:
+            #     util.histogram_of_tracks_duration(manager.track_history,reset=False)
+            
+            if check_for_multi_path_scenarios:
+                merged_measurement.create_dict(filename, manager.track_history)
+
+                if not plot_statement:
+                    plot = None
+
+                if check_for_multi_path(filename, plot, measurements, manager.track_history, timestamps, plot_statement):
+                    number_of_multi_path_scenarios += 1
+                    print("Multi path scenario found")
+                    txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_scenarios.txt"
+                    util.write_filenames_to_txt(filename, txt_filename)
+                    # with open("/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_scenarios.txt", "a") as f:
+                    #     f.write(os.path.basename(filename) + "\n")
+                    
+    #util.plot_histogram_of_tracks_duration()
+    print(f"Number of multi-path scenarios: {number_of_multi_path_scenarios}\n")
+    print("End of run.py")
     if counting_matrix:
         unvalidated_tracks = {"Number of tracks": count_matrix.number_of_tracks,"Unvalidated tracks": count_matrix.unvalidated_track}
-        #np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/unvalidated_tracks.npy",unvalidated_tracks)
+        print(f"unvalidated tracks: {count_matrix.unvalidated_track}\n")
+        np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/unvalidated_tracks.npy",unvalidated_tracks)
         files_with_tracks_on_diagonal = {"Number of tracks on diagonal":count_matrix.number_of_tracks_on_diagonal,"Files":count_matrix.files_with_tracks_on_diagonal}
-        #np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
+        np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
         count_matrix.track_average_length()
-        #print(f"average length matrix: {count_matrix.average_length_matrix}\n")
+        print(f"average length matrix: {count_matrix.average_length_matrix}\n")
     

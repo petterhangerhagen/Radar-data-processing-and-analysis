@@ -201,7 +201,7 @@ def merged_measurements(filename,track_history, plot_scenarios=False, return_tru
     
     print("############### Merged measurements ###############")
     if len(track_history.items()) < 3:
-        print("Only one track, no measurements to merge")
+        print("Fewer than 3 tracks, assume no merged measurments.")
         return False
     
     number_of_merged_measurements = 0
@@ -236,8 +236,6 @@ def merged_measurements(filename,track_history, plot_scenarios=False, return_tru
                         merged_measurement = MergeMeasurements(close_measurement_pair, next_timestamp ,next_measurement)
                         if plot_scenarios:
                             merged_measurement.add_to_plot(ax)
-                        #plt.pause(0.1)
-                        #temp_in = input("Continue?")
                         merged_measurements_dict[number_of_merged_measurements] = merged_measurement
 
                         print("Merged measurement")
@@ -248,17 +246,17 @@ def merged_measurements(filename,track_history, plot_scenarios=False, return_tru
     print(f"Number of merged measurements: {number_of_merged_measurements}")
     if plot_scenarios:
         if number_of_merged_measurements > 0:
-            #plt.show()
             file_name = os.path.basename(filename)
             file_name = os.path.splitext(file_name)[0]
-            #print(f"File name: {file_name}")
             save_path = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements_plots"
             save_path = os.path.join(save_path,file_name + ".png")
             print(f"Saving plot to {save_path}")
-            #temp_in = input("Continue?")
             plt.savefig(save_path)
+            plt.close()
+        else:
+            plt.close()
             
-    plt.close()
+    #plt.close()
 
     print("##################################################")
     if return_true_or_false:
@@ -294,6 +292,6 @@ def point_inside_polygon(measurement, vertices):
     return inside
 
 
-if __name__ == "__main__":
-    merged_measurements()
+# if __name__ == "__main__":
+#     merged_measurements()
     

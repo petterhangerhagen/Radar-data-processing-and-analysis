@@ -2,6 +2,46 @@ import os
 import datetime
 import glob
 import numpy as np
+import matplotlib.pyplot as plt
+
+def find_files(root,txt_filename):
+    """
+    Finds the files in the root directory that are given in the txt file
+    """
+    with open(txt_filename, 'r') as f:
+        lines = f.readlines()
+    files = []
+    for line in lines:
+        files.append(line[:-1])
+
+    path_list = []
+    for item in os.listdir(root):
+        list_of_files = glob.glob(os.path.join(root, item, '*.json'))
+        for file in list_of_files:
+            if  os.path.basename(file) in files:
+                path_list.append(file)
+
+    return path_list
+
+def write_filenames_to_txt(filename, txt_filename):
+    """
+    Writes the filename to the txt file, if the filename is not already written
+    """
+    with open(txt_filename, 'r') as f:
+        lines = f.readlines()
+    files = []
+    for line in lines:
+        files.append(line[:-1])
+
+    already_written = False
+    if os.path.basename(filename) in files:
+        already_written = True
+        print(f"File {os.path.basename(filename)} already written to txt file")
+
+    if not already_written:
+        with open(txt_filename, 'a') as f:
+            f.write(os.path.basename(filename) + "\n")
+   
 
 def make_new_directory():
     # Making new directory for the results
@@ -86,6 +126,69 @@ def print_current_tracks(track_history):
     for key, value in track_history.items():
         print(f"Track {key}")
     print("\n")
+
+def histogram_of_tracks_duration(track_history,reset=False):
+    tracks_duration_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration.npy",allow_pickle=True).item()
+    if reset:
+        tracks_duration_dict = {}
+        tracks_duration_dict["0-20"] = 0
+        tracks_duration_dict["20-40"] = 0
+        tracks_duration_dict["40-60"] = 0
+        tracks_duration_dict["60-80"] = 0
+        tracks_duration_dict["80-100"] = 0
+        tracks_duration_dict["100-120"] = 0
+        tracks_duration_dict["120-140"] = 0
+        tracks_duration_dict["140-160"] = 0
+        tracks_duration_dict["160-180"] = 0
+        tracks_duration_dict["180-200"] = 0
+        tracks_duration_dict[">200"] = 0
+
+    track_durations = []
+    for track in track_history.items():
+        track_start_time = track[1][0].timestamp
+        track_end_time = track[1][-1].timestamp
+        track_time = track_end_time - track_start_time
+        track_durations.append(track_time)
+
+    
+    for duration in track_durations:
+        if duration < 20:
+            tracks_duration_dict["0-20"] += 1
+        elif 20 <= duration < 40:
+            tracks_duration_dict["20-40"] += 1
+        elif 40 <= duration < 60:
+            tracks_duration_dict["40-60"] += 1
+        elif 60 <= duration < 80:
+            tracks_duration_dict["60-80"] += 1
+        elif 80 <= duration < 100:
+            tracks_duration_dict["80-100"] += 1
+        elif 100 <= duration < 120:
+            tracks_duration_dict["100-120"] += 1
+        elif 120 <= duration < 140:
+            tracks_duration_dict["120-140"] += 1
+        elif 140 <= duration < 160:
+            tracks_duration_dict["140-160"] += 1
+        elif 160 <= duration < 180:
+            tracks_duration_dict["160-180"] += 1
+        elif 180 <= duration < 200:
+            tracks_duration_dict["180-200"] += 1
+        else:
+            tracks_duration_dict[">200"] += 1
+            #print(f"Track duration = {duration:.2f}")
+    np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration.npy",tracks_duration_dict)
+
+def plot_histogram_of_tracks_duration():
+    tracks_duration_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration.npy",allow_pickle=True).item()
+    fig, ax = plt.subplots(figsize=(12, 5))
+
+    # Get a list of colors for each bar
+    colors = plt.cm.viridis(np.linspace(0, 1, len(tracks_duration_dict)))
+
+    ax.bar(tracks_duration_dict.keys(), tracks_duration_dict.values(), color=colors)
+    ax.set_xlabel('Duration of tracks [s]')
+    ax.set_ylabel('Number of tracks')
+    ax.set_title('Histogram of tracks duration')
+    plt.show()
 
 def read_out_txt_file(root):
     """

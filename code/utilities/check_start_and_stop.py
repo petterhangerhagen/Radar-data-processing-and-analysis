@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class RectangleA:
-    def __init__(self, bottom_left=[40,-60], top_right=[120,20]): # earlier [-120,-40], [-30,40]
+    def __init__(self, bottom_left=[40,-60], top_right=[118,18]): # earlier [-120,-40], [-30,40]
         self.bottom_left = bottom_left
         self.top_right = top_right
         self.index = 0
@@ -25,7 +25,7 @@ class RectangleA:
             return False
 
 class RectangleB:
-    def __init__(self, bottom_left=[-38,-32], top_right=[-4,20]):
+    def __init__(self, bottom_left=[-38,-32], top_right=[-4,0]):
         self.bottom_left = bottom_left
         self.top_right = top_right
         self.index = 1
@@ -40,7 +40,7 @@ class RectangleB:
             return False
 
 class RectangleC:
-    def __init__(self, bottom_left=[-120,-140], top_right=[-40,-80]):
+    def __init__(self, bottom_left=[-118,-138], top_right=[-41,-80]):
         self.bottom_left = bottom_left
         self.top_right = top_right
         self.index = 2
@@ -55,7 +55,7 @@ class RectangleC:
             return False
 
 class RectangleD:
-    def __init__(self, bottom_left=[-40,-140], top_right=[20,-80]):
+    def __init__(self, bottom_left=[-39,-138], top_right=[20,-90]):
         self.bottom_left = bottom_left
         self.top_right = top_right
         self.index = 3
@@ -70,7 +70,7 @@ class RectangleD:
             return False
 
 class RectangleE:
-    def __init__(self, bottom_left=[-60,-70], top_right=[-45,-35]):
+    def __init__(self, bottom_left=[-60,-70], top_right=[-35,-35]):
         self.bottom_left = bottom_left
         self.top_right = top_right
         self.index = 4
@@ -85,7 +85,7 @@ class RectangleE:
             return False
 
 class RectangleF:
-    def __init__(self, bottom_left=[-4,-25], top_right=[40,0]):
+    def __init__(self, bottom_left=[-2,-25], top_right=[38,0]):
         self.bottom_left = bottom_left
         self.top_right = top_right
         self.index = 5
@@ -148,14 +148,8 @@ class CountMatrix:
             if index not in start_rectangle.keys() or index not in stop_rectangle.keys():
                 self.unvalidated_track += 1
         
-        #print(start_rectangle)
-        #print("\n")
-        #print(stop_rectangle)
-        
         for start_key in start_rectangle.keys():
             if start_key in stop_rectangle.keys():
-                #print(start_rectangle[start_key][0])
-                #print(stop_rectangle[start_key][1])
                 self.count_matrix[start_rectangle[start_key][0].index][stop_rectangle[start_key][0].index] += 1
                 self.average_length_matrix[start_rectangle[start_key][0].index][stop_rectangle[start_key][0].index] += start_rectangle[start_key][1]
                 if start_rectangle[start_key].index == stop_rectangle[start_key].index:

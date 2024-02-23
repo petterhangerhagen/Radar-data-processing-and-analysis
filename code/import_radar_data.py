@@ -203,7 +203,7 @@ def radar_data_mat_file(filename):
 def radar_data_json_file(json_file, relative_to_map = False):
 
     if relative_to_map:
-        data = np.load(f"/home/aflaptop/Documents/radar_tracker/code/occupancy_grid.npy",allow_pickle='TRUE').item()
+        data = np.load(f"/home/aflaptop/Documents/radar_tracker/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
         origin_x = data["origin_y"]
         origin_y = data["origin_x"]
 

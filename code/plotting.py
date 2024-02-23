@@ -13,7 +13,7 @@ from parameters import tracker_params, measurement_params, process_params, track
 from matplotlib.colors import LinearSegmentedColormap
 
 # define font size, and size of plots
-matplotlib.rcParams['font.size'] = 7
+matplotlib.rcParams['font.size'] = 30
 matplotlib.rcParams['figure.figsize'] = 7.16666, 7.166666
 
 class ScenarioPlot(object):
@@ -30,21 +30,21 @@ class ScenarioPlot(object):
         self.resolution = resolution
         self.filename = filename.split("/")[-1].split("_")[-1].split(".")[0]
         self.dir_name = dir_name
-        self.fig, self.ax = plt.subplots(figsize=(11, 7.166666))
-        self.ax1 = self.ax
-        self.write_parameters_to_plot()
+        
+        #self.ax1 = self.ax
         
 
     def create(self, measurements, track_history, ownship, timestamps, ground_truth=None):
-
-        self.write_track_time_to_plot(track_history)
-        self.write_coherence_factor_to_plot(track_history)
+        self.fig, self.ax1 = plt.subplots(figsize=(11, 7.166666))
+        #self.write_track_time_to_plot(track_history)
+        #self.write_coherence_factor_to_plot(track_history)
+        #self.write_parameters_to_plot()
 
         # Radar pos
         x_radar = 0
         y_radar = 0
-        self.ax1.scatter(x_radar,y_radar,c="black",zorder=10)
-        self.ax1.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10)
+        self.ax1.scatter(x_radar,y_radar,c="black",zorder=15)
+        self.ax1.annotate(f"Radar",(x_radar + 2,y_radar + 2), fontsize=15, zorder=10)
         
         plot_measurements(self.filename,measurements, self.ax1, timestamps, marker_size=self.measurement_marker_size)
         
@@ -63,15 +63,16 @@ class ScenarioPlot(object):
         self.ax1.set_xlim(-120, 120)
         self.ax1.set_ylim(-140, 20)
         self.ax1.set_aspect('equal')
-        self.ax1.set_xlabel('East [m]')
-        self.ax1.set_ylabel('North [m]')
+        self.ax1.set_xlabel('East [m]', fontsize=15)
+        self.ax1.set_ylabel('North [m]', fontsize=15)
+        plt.tick_params(axis='both', which='major', labelsize=15)
         plt.tight_layout()
 
         for key in track_history.keys():
             x_start = track_history[key][0].posterior[0][0]
             y_start = track_history[key][0].posterior[0][2]
             self.ax1.scatter(x_start,y_start,c="red",zorder=10)
-            self.ax1.annotate(f"Start Track {key}",(x_start,y_start),zorder=10)
+            self.ax1.annotate(f"Start Track {key}",(x_start,y_start), fontsize=10, zorder=10)
 
         self.ax1.grid(True)
         #plt.show()
@@ -82,7 +83,8 @@ class ScenarioPlot(object):
         plt.close()
 
     def create_with_map(self, measurements, track_history, ownship, timestamps, ground_truth=None):
-
+        self.fig, self.ax1 = plt.subplots(figsize=(11, 7.166666))
+        
         # Plotting the occupancy grid'
         data = np.load(f"/home/aflaptop/Documents/radar_tracker/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
         occupancy_grid = data["occupancy_grid"]
@@ -150,6 +152,35 @@ class ScenarioPlot(object):
         self.fig.savefig(save_name,dpi=self.resolution)
         print(f"Saving tracker_{save_name}")
         plt.close()
+
+    def create_to_multi_path(self, ax, measurements, track_history, timestamps, ground_truth=None):
+
+        # Radar pos
+        x_radar = 0
+        y_radar = 0
+        ax.scatter(x_radar,y_radar,c="black",zorder=15)
+        ax.annotate(f"Radar",(x_radar + 2,y_radar + 2), fontsize=15, zorder=10)
+        
+        plot_measurements(self.filename,measurements, ax, timestamps, marker_size=self.measurement_marker_size)
+        
+        if ground_truth:
+            plot_track_pos(ground_truth, ax , color='k', marker_size=self.track_marker_size)
+        
+        plot_track_pos(
+            track_history,
+            ax,
+            add_index=self.add_track_indexes,
+            add_covariance_ellipses=self.add_covariance_ellipses,
+            add_validation_gates=self.add_validation_gates,
+            gamma=self.gamma)
+
+
+        for key in track_history.keys():
+            x_start = track_history[key][0].posterior[0][0]
+            y_start = track_history[key][0].posterior[0][2]
+            ax.scatter(x_start,y_start,c="red",zorder=10)
+            ax.annotate(f"Start Track {key}",(x_start,y_start), fontsize=10, zorder=10)
+
 
 
     def write_track_time_to_plot(self, track_history):
@@ -324,3 +355,62 @@ def find_track_limits(track_history, extra_spacing=50):
     E_min -= extra_spacing
     E_max += extra_spacing
     return N_min, N_max, E_min, E_max
+
+def plot_only_map(rectangles):
+    # Plotting the occupancy grid'
+    data = np.load(f"/home/aflaptop/Documents/radar_tracker/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
+    occupancy_grid = data["occupancy_grid"]
+    origin_x = data["origin_x"]
+    origin_y = data["origin_y"]
+
+    colors = [(1, 1, 1), (0.8, 0.8, 0.8)]  # Black to light gray
+    cm = LinearSegmentedColormap.from_list('custom_gray', colors, N=256)
+    fig, ax = plt.subplots(figsize=(11, 7.166666))
+    ax.imshow(occupancy_grid, cmap=cm, interpolation='none', origin='upper', extent=[0, occupancy_grid.shape[1], 0, occupancy_grid.shape[0]])
+    
+    # Radar pos
+    x_radar = origin_x
+    y_radar = origin_y
+    ax.plot(x_radar,y_radar,c="red", marker="o", zorder=10, markersize=10)
+    ax.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10,fontsize=15)
+
+    #N_min, N_max, E_min, E_max = find_track_limits(track_history)
+    ax.set_xlim(origin_x-120,origin_x + 120)
+    ax.set_ylim(origin_y-140, origin_y + 20)
+    ax.set_aspect('equal')
+    ax.set_xlabel('East [m]',fontsize=15)
+    ax.set_ylabel('North [m]',fontsize=15)
+    
+
+    # reformating the x and y axis
+    x_axis_list = np.arange(origin_x-120,origin_x+121,20)
+    x_axis_list_str = []
+    for x in x_axis_list:
+        x_axis_list_str.append(str(int(x-origin_x)))
+    plt.xticks(x_axis_list, x_axis_list_str)
+
+    y_axis_list = np.arange(origin_y-140,origin_y+21,20)
+    y_axis_list_str = []
+    for y in y_axis_list:
+        y_axis_list_str.append(str(int(y-origin_y)))
+    plt.yticks(y_axis_list, y_axis_list_str)
+    plt.tick_params(axis='both', which='major', labelsize=15)
+    plt.tight_layout()
+
+
+    names = ["A","B","C","D","E","F"]
+    for rec, name in zip(rectangles, names):
+
+        x = np.array([rec.bottom_left[0], rec.bottom_left[0], rec.top_right[0], rec.top_right[0]])
+        y = np.array([rec.bottom_left[1], rec.top_right[1], rec.top_right[1], rec.bottom_left[1]])
+        x = x + origin_x
+        y = y + origin_y
+
+        rectangle = Polygon(list(zip(x, y)))
+        ax.add_patch(PolygonPatch(rectangle, edgecolor = "#ff7f0e", facecolor = '#ff7f0e', alpha=0.3, linewidth=3.5))
+        ax.annotate(name, ((x[0] + x[2])/2 - 2, (y[0] + y[2])/2 - 2), fontsize=25, color='black')
+
+    save_name = "/home/aflaptop/Documents/radar_tracking_results/map/only_map.png"
+    fig.savefig(save_name,dpi=400)
+    print(f"Saving figure to {save_name}")
+    plt.close()
