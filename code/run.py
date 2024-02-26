@@ -88,7 +88,7 @@ if __name__ == '__main__':
     # turn on/off different functionalities
     # 1: True, 0: False
     plot_statement = 1
-    relative_to_map = 1
+    relative_to_map = 0
     video_statement = 0
     remove_track_with_low_coherence_factor = 1
     check_for_multi_target_scenarios = 0
