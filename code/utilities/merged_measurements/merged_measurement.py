@@ -202,6 +202,7 @@ def merged_measurements(filename,track_history, plot_scenarios=False, return_tru
     print("############### Merged measurements ###############")
     if len(track_history.items()) < 3:
         print("Fewer than 3 tracks, assume no merged measurments.")
+        print("##################################################\n")
         return False
     
     number_of_merged_measurements = 0
@@ -258,7 +259,7 @@ def merged_measurements(filename,track_history, plot_scenarios=False, return_tru
             
     #plt.close()
 
-    print("##################################################")
+    print("##################################################\n")
     if return_true_or_false:
         if number_of_merged_measurements > 0:
             return True

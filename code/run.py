@@ -93,7 +93,7 @@ if __name__ == '__main__':
     remove_track_with_low_coherence_factor = 1
     check_for_multi_target_scenarios = 0
     check_for_merged_measurements = 0
-    check_for_multi_path_scenarios = 1
+    check_for_multi_path_scenarios = 0
     counting_matrix = 0
     reset_count_matrix = 0
     
@@ -101,8 +101,15 @@ if __name__ == '__main__':
     if counting_matrix:
         count_matrix = CountMatrix(reset=reset_count_matrix)
 
+
+
+
     ### Import data ###
-    import_selection = 4
+        
+    import_selection = 0
+
+    ###################
+
 
     ## All data
     if import_selection == 0:
@@ -111,8 +118,8 @@ if __name__ == '__main__':
 
     ## Specific data
     elif import_selection == 1:
-        # root = "/home/aflaptop/Documents/radar_data/data_aug_15-18"
-        root = "/home/aflaptop/Documents/radar_data/data_aug_18-19"
+        root = "/home/aflaptop/Documents/radar_data/data_aug_15-18"
+        # root = "/home/aflaptop/Documents/radar_data/data_aug_18-19"
         # root = "/home/aflaptop/Documents/radar_data/data_aug_22-23"
         # root = "/home/aflaptop/Documents/radar_data/data_aug_25-26-27"
         # root = "/home/aflaptop/Documents/radar_data/data_aug_28-29-30-31"
@@ -145,7 +152,7 @@ if __name__ == '__main__':
 
     # Specific file
     elif import_selection == 5:
-        path_list = ["/home/aflaptop/Documents/radar_data/data_sep_17-18-19-24/rosbag_2023-09-17-15-57-01.json"]
+        path_list = ["/home/aflaptop/Documents/radar_data/data_sep_17-18-19-24/rosbag_2023-09-17-12-12-38.json"]
     
     # Empty list
     else: 
@@ -155,7 +162,7 @@ if __name__ == '__main__':
     number_of_merged_measurements_scenarios = 0
     number_of_multi_path_scenarios = 0
     for i,filename in enumerate(path_list):
-        if True:
+        if False:
             print(f'File number {i+1} of {len(path_list)}')
             print(f"Curent file: {os.path.basename(filename)}\n")
 
@@ -190,7 +197,7 @@ if __name__ == '__main__':
             unvalid_tracks = util.check_lenght_of_tracks(unvalid_tracks, track_lengths_dict)
                     
             # Print current tracks
-            util.print_current_tracks(manager.track_history)
+            #util.print_current_tracks(manager.track_history)
 
             # Remove unvalid tracks
             if remove_track_with_low_coherence_factor:
@@ -198,8 +205,8 @@ if __name__ == '__main__':
                     del manager.track_history[track]
             
                 # Print current tracks
-                print("After removing tracks with low coherence factor")
-                util.print_current_tracks(manager.track_history)
+                #print("After removing tracks with low coherence factor")
+                #util.print_current_tracks(manager.track_history)
 
             # Check for merged measurements
             if check_for_merged_measurements and remove_track_with_low_coherence_factor and not relative_to_map:
@@ -207,10 +214,9 @@ if __name__ == '__main__':
 
                 if merged_measurement.merged_measurements(filename, manager.track_history, plot_scenarios=True, return_true_or_false=True):
                     number_of_merged_measurements_scenarios += 1
-                    with open("/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt", "a") as f:
-                       f.write(os.path.basename(filename) + "\n")
-                print(f"Number of merged measurement scenarios: {number_of_merged_measurements_scenarios}\n")
-    
+                    txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt"
+                    util.write_filenames_to_txt(filename, txt_filename)
+
 
             # Video vs image
             if plot_statement:
@@ -248,18 +254,19 @@ if __name__ == '__main__':
             if check_for_multi_target_scenarios and remove_track_with_low_coherence_factor and not relative_to_map:
                 if multi_target_scenarios(manager.track_history):
                     number_of_multiple_target_scenarios += 1
-                    with open("/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt", "a") as f:
-                        f.write(os.path.basename(filename) + "\n")
+                    txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt"
+                    util.write_filenames_to_txt(filename, txt_filename)
+
                     if plot_statement:
                         move_plot_to_this_directory(filename, dir_name)
                     #print(f"Number of multiple target scenarios: {number_of_multiple_target_scenarios}\n")
 
-                print(f"Number of multi-target scenarios: {number_of_multiple_target_scenarios}\n")
+                #print(f"Number of multi-target scenarios: {number_of_multiple_target_scenarios}\n")
 
-            # if i==0:
-            #     util.histogram_of_tracks_duration(manager.track_history,reset=True)
-            # else:
-            #     util.histogram_of_tracks_duration(manager.track_history,reset=False)
+            if i==0:
+                util.histogram_of_tracks_duration(manager.track_history,reset=True)
+            else:
+                util.histogram_of_tracks_duration(manager.track_history,reset=False)
             
             if check_for_multi_path_scenarios:
                 merged_measurement.create_dict(filename, manager.track_history)
@@ -276,7 +283,15 @@ if __name__ == '__main__':
                     #     f.write(os.path.basename(filename) + "\n")
                     
     #util.plot_histogram_of_tracks_duration()
-    print(f"Number of multi-path scenarios: {number_of_multi_path_scenarios}\n")
+    if check_for_multi_target_scenarios:
+        print(f"Number of multi-path scenarios: {number_of_multi_path_scenarios}\n")
+    if check_for_merged_measurements:
+        print(f"Number of merged measurement scenarios: {number_of_merged_measurements_scenarios}\n")
+    if check_for_multi_path_scenarios:
+        print(f"Number of multi-path scenarios: {number_of_multi_path_scenarios}\n")
+
+    util.plot_histogram_of_tracks_duration()
+
     print("End of run.py")
     if counting_matrix:
         unvalidated_tracks = {"Number of tracks": count_matrix.number_of_tracks,"Unvalidated tracks": count_matrix.unvalidated_track}

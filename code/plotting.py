@@ -96,14 +96,14 @@ class ScenarioPlot(object):
         self.ax1.imshow(occupancy_grid, cmap=cm, interpolation='none', origin='upper', extent=[0, occupancy_grid.shape[1], 0, occupancy_grid.shape[0]])
         
 
-        self.write_track_time_to_plot(track_history)
-        self.write_coherence_factor_to_plot(track_history)
+        # self.write_track_time_to_plot(track_history)
+        # self.write_coherence_factor_to_plot(track_history)
 
         # Radar pos
         x_radar = origin_x
         y_radar = origin_y
         self.ax1.plot(x_radar,y_radar,c="red", marker="o", zorder=10, markersize=10)
-        self.ax1.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10,fontsize=10)
+        self.ax1.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10,fontsize=15)
 
         plot_measurements(self.filename,measurements, self.ax1, timestamps, marker_size=self.measurement_marker_size)
         
@@ -122,8 +122,9 @@ class ScenarioPlot(object):
         self.ax1.set_xlim(origin_x-120,origin_x + 120)
         self.ax1.set_ylim(origin_y-140, origin_y + 20)
         self.ax1.set_aspect('equal')
-        self.ax1.set_xlabel('East [m]')
-        self.ax1.set_ylabel('North [m]')
+        self.ax1.set_xlabel('East [m]',fontsize=15)
+        self.ax1.set_ylabel('North [m]',fontsize=15)
+        plt.tick_params(axis='both', which='major', labelsize=15)
         plt.tight_layout()
 
         for key in track_history.keys():
@@ -194,7 +195,7 @@ class ScenarioPlot(object):
             if i < len(track_history.items()) - 1:
                 text += "\n"
 
-        self.ax.text(0.0, -0.13, text, transform=self.ax.transAxes, fontsize=10, verticalalignment='top', bbox=dict(boxstyle='round', facecolor='grey', alpha=0.15))
+        self.ax1.text(0.0, -0.13, text, transform=self.ax.transAxes, fontsize=10, verticalalignment='top', bbox=dict(boxstyle='round', facecolor='grey', alpha=0.15))
 
     def write_coherence_factor_to_plot(self, track_history,coherence_factor=0.75):
         text = "Coherence factor for tracks:\n"
@@ -221,7 +222,7 @@ class ScenarioPlot(object):
             if i < len(track_history.items()) - 1:
                 text += "\n"
 
-        self.ax.text(0.3, -0.13, text, transform=self.ax.transAxes, fontsize=10, verticalalignment='top', bbox=dict(boxstyle='round', facecolor='grey', alpha=0.15))
+        self.ax1.text(0.3, -0.13, text, transform=self.ax.transAxes, fontsize=10, verticalalignment='top', bbox=dict(boxstyle='round', facecolor='grey', alpha=0.15))
             #print(f"Coherence factor for track {track[0]} = {ck/len(u):.2f}\n")
             #if ck/len(u) < coherence_factor:
             #    not_valid_tracks.append(track[0])
@@ -252,7 +253,7 @@ class ScenarioPlot(object):
         
         props = dict(boxstyle='round', facecolor='grey', alpha=0.15)  # bbox features
         font_size = 10
-        self.ax.text(1.03, 0.99, my_text, transform=self.ax.transAxes, fontsize=font_size, verticalalignment='top', bbox=props)
+        self.ax1.text(1.03, 0.99, my_text, transform=self.ax.transAxes, fontsize=font_size, verticalalignment='top', bbox=props)
 
 
 
