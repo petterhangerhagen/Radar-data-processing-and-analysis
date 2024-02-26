@@ -43,9 +43,11 @@ New custom defined functionality is contained in the *utilities*-folder:
 
 The *npy_files*-folder contains .npy files used for storing data temporary. 
 
-# How to use the code:
+## Code setup:
+I am using a virtual python environment to get correct version of the requierments, without messig up for other projects. A recommondation, but not nescessary. 
 
-
+The required packages can be found inside `requirements.txt`. All can be installed by running:
+```pip install -r /path/to/requirements.txt ```
 
 
 
