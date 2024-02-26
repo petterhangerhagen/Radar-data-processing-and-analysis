@@ -1,10 +1,38 @@
 # Processing and analysis of radar dataset
-This code is processing and analyzing a radar dataset. The dataset is recorded from the Trondheim City Canal during the summer of 2023. 
+This code is processing and analyzing a radar dataset. The dataset is recorded from the Trondheim City Canal during the summer of 2023. The dataset can be obtain from ..., and showed have the following file path ...
 
 Large parts of the code is adapted from the Code Ocean capsule by Audun Gullikstad Hem (2021), https://codeocean.com/capsule/3448343/tree/v1.
 
-## The VIMMJIPDA tracker
+## Structure
+The code is launched from `run.py`. Here, one can choose which scenarios form the dataset to be used and include different different analysis. The code inside *tracking*-folder is a pure copy from Audun Gullikstad Hem, and follows the same structure:
 
+* `associators.py`: contains data associators.
+* `constructs.py`: contains the different data structures the tracker uses.
+* `filters.py`: contains the state filters.
+* `initiators.py`: contains functionality for initiating tracks.
+* `managers.py`: contains the manager, which calls the initiators, terminators and trackers.
+* `models.py`: contains the different models, i.e. kinematic models, measurement models and clutter models.
+* `terminators.py`: contains functionality for terminating tracks.
+* `trackers.py`: contains the tracker itself.
+* `utilities.py`: contains helping functions that are being utilized by the other modules.
+
+The supporting structure from Audun Gullikstad Hem have been edited to fit the new dataset. 
+
+* `import_radar_data.py`: Imports the radar data from .json files and converts into desired format. 
+* `parameters.py`: contains all the paramets for the tracker. The parameters can be changed in this file.
+* `plotting.py`: contains the plotting functionality.
+* `video.py`: contains functionality for creating video of tracking scenarios. 
+
+More functionality is contained in the *utilities*-folder. It contains x files:
+* `utilities.py`:
+* `images_to_video.py`:
+* `check_start_and_stop.py`:
+* `merged_measurements`:
+    * `merged_measurements.py`:
+
+
+
+<!-- ## The VIMMJIPDA tracker
 This code is all that is required to run the VIMMJIPDA tracker described in "Multi-target tracking with multiple models and
 visibility verified on maritime radar data". Two data sets are included, which are both described in the aforementioned article.
 
@@ -32,4 +60,4 @@ Furthermore, there is some supporting structure:
 
 * `import_data.py`: imports the data from the .mat files in the data folder and converts it to the desired form.
 * `parameters.py`: contains all the paramets for the tracker. The parameters can be changed in this file, and then imported to various run-scripts.
-* `plotting.py`: contains the plotting functionality.
+* `plotting.py`: contains the plotting functionality. -->
