@@ -1,4 +1,9 @@
-# The VIMMJIPDA tracker
+# Processing and analysis of radar dataset
+This code is processing and analyzing a radar dataset. The dataset is recorded from the Trondheim City Canal during the summer of 2023. 
+
+Large parts of the code is adapted from the Code Ocean capsule by Audun Gullikstad Hem (2021), https://codeocean.com/capsule/3448343/tree/v1.
+
+## The VIMMJIPDA tracker
 
 This code is all that is required to run the VIMMJIPDA tracker described in "Multi-target tracking with multiple models and
 visibility verified on maritime radar data". Two data sets are included, which are both described in the aforementioned article.
