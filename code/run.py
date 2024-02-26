@@ -87,8 +87,8 @@ if __name__ == '__main__':
 
     # turn on/off different functionalities
     # 1: True, 0: False
-    plot_statement = 0
-    relative_to_map = 0
+    plot_statement = 1
+    relative_to_map = 1
     video_statement = 0
     remove_track_with_low_coherence_factor = 1
     check_for_multi_target_scenarios = 0
@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
     ### Import data ###
         
-    import_selection = 0
+    import_selection = 5
 
     ###################
 
@@ -150,7 +150,7 @@ if __name__ == '__main__':
         path_list = util.find_files(root,txt_filename)
 
 
-    # Specific file
+    # Single scenario
     elif import_selection == 5:
         path_list = ["/home/aflaptop/Documents/radar_data/data_sep_17-18-19-24/rosbag_2023-09-17-12-12-38.json"]
     
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     number_of_merged_measurements_scenarios = 0
     number_of_multi_path_scenarios = 0
     for i,filename in enumerate(path_list):
-        if False:
+        if True:
             print(f'File number {i+1} of {len(path_list)}')
             print(f"Curent file: {os.path.basename(filename)}\n")
 

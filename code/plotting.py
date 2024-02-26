@@ -182,8 +182,6 @@ class ScenarioPlot(object):
             ax.scatter(x_start,y_start,c="red",zorder=10)
             ax.annotate(f"Start Track {key}",(x_start,y_start), fontsize=10, zorder=10)
 
-
-
     def write_track_time_to_plot(self, track_history):
         text = ""
         for i,track in enumerate(track_history.items()):

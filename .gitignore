@@ -1,2 +1,8 @@
 /radar_tracker/
+/code/__pycache__/
+/code/utilities/__pycache__/
+/code/tracking/__pycache__/
+code/utilities/merged_measurements/__pycache__
+code/utilities/multi_path/__pycache__
+code/utilities/multi_target/__pycache__
 *.pyc

@@ -23,16 +23,36 @@ The supporting structure from Audun Gullikstad Hem have been edited to fit the n
 * `plotting.py`: contains the plotting functionality.
 * `video.py`: contains functionality for creating video of tracking scenarios. 
 
-More functionality is contained in the *utilities*-folder. It contains x files:
-* `utilities.py`:
-* `images_to_video.py`:
-* `check_start_and_stop.py`:
-* `merged_measurements`:
-    * `merged_measurements.py`:
+New custom defined functionality is contained in the *utilities*-folder:
+* `utilities.py`: contains support functions and different functions used for analysing the data.
+* `images_to_video.py`: contains support functions for creating a video.
+* `check_start_and_stop.py`: contains functionality for creating traffic matrix based on tracks established by the tracker.
+* `merged_measurements/`: 
+    * `merged_measurements.py`: containg functionality for finding merged measurements.
+    * `merged_measurements.txt`: contains the name of the .json files which are defiend as merged measurements scenarios.
+    * `merged_measurement/`: 
+* `multi_path/`: 
+    * `multi_path.py`: contains functionality for findig multi path scenarios.
+    * `multi_path.txt`: contains the name of the .json files which are defiend as multi path scenarios.
+    * `multi_path/`: 
+* `multi_target/`:
+    * `multi_target_scenarios.py`: contains functionality for findig multi-target scenarios.
+    * `multi_target_scenarios.txt`: contains the name of the .json files which are defiend as multi-target scenarios.
+    * `multi_target/`: 
+
+
+The *npy_files*-folder contains .npy files used for storing data temporary. 
+
+# How to use the code:
 
 
 
-<!-- ## The VIMMJIPDA tracker
+
+
+
+
+<!-- # The VIMMJIPDA tracker
+
 This code is all that is required to run the VIMMJIPDA tracker described in "Multi-target tracking with multiple models and
 visibility verified on maritime radar data". Two data sets are included, which are both described in the aforementioned article.
 
@@ -61,3 +81,4 @@ Furthermore, there is some supporting structure:
 * `import_data.py`: imports the data from the .mat files in the data folder and converts it to the desired form.
 * `parameters.py`: contains all the paramets for the tracker. The parameters can be changed in this file, and then imported to various run-scripts.
 * `plotting.py`: contains the plotting functionality. -->
+
