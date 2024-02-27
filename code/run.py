@@ -19,7 +19,7 @@ import datetime
 import warnings
 
 import utilities.merged_measurements.merged_measurement as merged_measurement
-from utilities.multi_target.multi_target_scenarios import multi_target_scenarios, move_plot_to_this_directory
+from utilities.multi_target.multi_target import multi_target_scenarios, move_plot_to_this_directory
 from utilities.multi_path.multi_path import check_for_multi_path
 from utilities.check_start_and_stop import CountMatrix
 from utilities.check_start_and_stop import RectangleA, RectangleB, RectangleC, RectangleD, RectangleE, RectangleF
