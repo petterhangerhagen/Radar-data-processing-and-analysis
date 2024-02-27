@@ -19,10 +19,10 @@ from tracking import constructs, utilities, filters, models, initiators, termina
 warnings.filterwarnings("ignore", message="Conversion of an array with ndim > 0 to a scalar is deprecated")
 
 
-radar_data_path = "/home/petter/radar_data"
-wokring_directory = "/home/petter/Radar-data-processing-and-analysis"
-# radar_data_path = "/home/aflaptop/Documents/radar_data"
-# wokring_directory = "/home/aflaptop/Documents/radar_tracker"
+# radar_data_path = "/home/petter/radar_data"
+# wokring_directory = "/home/petter/Radar-data-processing-and-analysis"
+radar_data_path = "/home/aflaptop/Documents/radar_data"
+wokring_directory = "/home/aflaptop/Documents/radar_tracker"
 
 def setup_manager():
     if IMM_off:

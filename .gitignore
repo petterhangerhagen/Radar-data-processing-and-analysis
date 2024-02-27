@@ -6,3 +6,5 @@ code/utilities/merged_measurements/__pycache__
 code/utilities/multi_path/__pycache__
 code/utilities/multi_target/__pycache__
 *.pyc
+*.png
+*.npy
