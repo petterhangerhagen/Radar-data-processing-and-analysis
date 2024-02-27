@@ -366,7 +366,7 @@ def find_track_limits(track_history, extra_spacing=50):
     E_max += extra_spacing
     return N_min, N_max, E_min, E_max
 
-def plot_only_map(wokring_directory, rectangles):
+def plot_only_map(wokring_directory, rectangles=None, radar_circle=None):
     # Plotting the occupancy grid'
     data = np.load(f"{wokring_directory}/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
     occupancy_grid = data["occupancy_grid"]
@@ -384,43 +384,88 @@ def plot_only_map(wokring_directory, rectangles):
     ax.plot(x_radar,y_radar,c="red", marker="o", zorder=10, markersize=10)
     ax.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10,fontsize=15)
 
-    #N_min, N_max, E_min, E_max = find_track_limits(track_history)
-    ax.set_xlim(origin_x-120,origin_x + 120)
-    ax.set_ylim(origin_y-140, origin_y + 20)
-    ax.set_aspect('equal')
-    ax.set_xlabel('East [m]',fontsize=15)
-    ax.set_ylabel('North [m]',fontsize=15)
-    
 
-    # reformating the x and y axis
-    x_axis_list = np.arange(origin_x-120,origin_x+121,20)
-    x_axis_list_str = []
-    for x in x_axis_list:
-        x_axis_list_str.append(str(int(x-origin_x)))
-    plt.xticks(x_axis_list, x_axis_list_str)
+    if rectangles is not None:
+        #N_min, N_max, E_min, E_max = find_track_limits(track_history)
+        ax.set_xlim(origin_x-120,origin_x + 120)
+        ax.set_ylim(origin_y-140, origin_y + 20)
+        ax.set_aspect('equal')
+        ax.set_xlabel('East [m]',fontsize=15)
+        ax.set_ylabel('North [m]',fontsize=15)
+        
 
-    y_axis_list = np.arange(origin_y-140,origin_y+21,20)
-    y_axis_list_str = []
-    for y in y_axis_list:
-        y_axis_list_str.append(str(int(y-origin_y)))
-    plt.yticks(y_axis_list, y_axis_list_str)
-    plt.tick_params(axis='both', which='major', labelsize=15)
-    plt.tight_layout()
+        # reformating the x and y axis
+        x_axis_list = np.arange(origin_x-120,origin_x+121,20)
+        x_axis_list_str = []
+        for x in x_axis_list:
+            x_axis_list_str.append(str(int(x-origin_x)))
+        plt.xticks(x_axis_list, x_axis_list_str)
+
+        y_axis_list = np.arange(origin_y-140,origin_y+21,20)
+        y_axis_list_str = []
+        for y in y_axis_list:
+            y_axis_list_str.append(str(int(y-origin_y)))
+        plt.yticks(y_axis_list, y_axis_list_str)
+        plt.tick_params(axis='both', which='major', labelsize=15)
+        plt.tight_layout()
+        names = ["A","B","C","D","E","F"]
+        for rec, name in zip(rectangles, names):
+
+            x = np.array([rec.bottom_left[0], rec.bottom_left[0], rec.top_right[0], rec.top_right[0]])
+            y = np.array([rec.bottom_left[1], rec.top_right[1], rec.top_right[1], rec.bottom_left[1]])
+            x = x + origin_x
+            y = y + origin_y
+
+            rectangle = Polygon(list(zip(x, y)))
+            ax.add_patch(PolygonPatch(rectangle, edgecolor = "#ff7f0e", facecolor = '#ff7f0e', alpha=0.3, linewidth=3.5))
+            ax.annotate(name, ((x[0] + x[2])/2 - 2, (y[0] + y[2])/2 - 2), fontsize=25, color='black')
+
+        save_name = f"{wokring_directory}/code/utilities/how_areas_are_defined_on_map.jpg"
+        fig.savefig(save_name,dpi=600)
+        print(f"Saving figure to {save_name}")
+        plt.close()
+        return None
+
+    if radar_circle is not None:
+        print("Plotting radar circle")
+        # circle = plt.Circle((origin_x, origin_y), radar_circle, color='red', fill=False, linewidth=3.5)
+        # ax.add_patch(circle)
+        # Define the radius and center of the circle
+        radius = 150
+        center = (origin_x, origin_y)
+
+        # Generate points on the circumference of the circle
+        theta = np.linspace(0, 2*np.pi, 100)
+        x = center[0] + radius * np.cos(theta)
+        y = center[1] + radius * np.sin(theta)
+        ax.plot(x, y, color='Black', linewidth=3.5)
+
+        # #N_min, N_max, E_min, E_max = find_track_limits(track_history)
+        ax.set_xlim(origin_x-160,origin_x + 160)
+        ax.set_ylim(origin_y-160, origin_y + 160)
+        ax.set_aspect('equal')
+        ax.set_xlabel('East [m]',fontsize=15)
+        ax.set_ylabel('North [m]',fontsize=15)
 
 
-    names = ["A","B","C","D","E","F"]
-    for rec, name in zip(rectangles, names):
+        # reformating the x and y axis
+        x_axis_list = np.arange(origin_x-160,origin_x+160,20)
+        x_axis_list_str = []
+        for x in x_axis_list:
+            x_axis_list_str.append(str(int(x-origin_x)))
+        plt.xticks(x_axis_list, x_axis_list_str)
 
-        x = np.array([rec.bottom_left[0], rec.bottom_left[0], rec.top_right[0], rec.top_right[0]])
-        y = np.array([rec.bottom_left[1], rec.top_right[1], rec.top_right[1], rec.bottom_left[1]])
-        x = x + origin_x
-        y = y + origin_y
+        y_axis_list = np.arange(origin_y-160,origin_y+160,20)
+        y_axis_list_str = []
+        for y in y_axis_list:
+            y_axis_list_str.append(str(int(y-origin_y)))
+        plt.yticks(y_axis_list, y_axis_list_str)
+        plt.tick_params(axis='both', which='major', labelsize=12)
+        plt.tight_layout()
 
-        rectangle = Polygon(list(zip(x, y)))
-        ax.add_patch(PolygonPatch(rectangle, edgecolor = "#ff7f0e", facecolor = '#ff7f0e', alpha=0.3, linewidth=3.5))
-        ax.annotate(name, ((x[0] + x[2])/2 - 2, (y[0] + y[2])/2 - 2), fontsize=25, color='black')
 
-    save_name = f"{wokring_directory}/code/utilities/how_areas_are_defined_on_map.jpg"
-    fig.savefig(save_name,dpi=400)
-    print(f"Saving figure to {save_name}")
-    plt.close()
+
+        save_name = f"{wokring_directory}/code/utilities/map.png"
+        fig.savefig(save_name,dpi=600)
+        print(f"Saving figure to {save_name}")
+        plt.close()

@@ -11,6 +11,8 @@ import datetime
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
+import plotting
+from utilities.check_start_and_stop import RectangleA, RectangleB, RectangleC, RectangleD, RectangleE, RectangleF
 
 def find_files(root,txt_filename):
     """
@@ -83,7 +85,7 @@ def check_timegaps(timestamps):
     time_gap = np.mean(time_gaps)
     for k in range(len(time_gaps)):
         if  not (0.8*time_gap < time_gaps[k][0] < 1.2*time_gap):
-            print(f"Time gap are not consistent, time gap {time_gaps[k][0]:.2f} at index {k}")
+            print(f"Time gap are not consistent, time gap {time_gaps[k][0]} at index {k}")
 
 def check_speed_of_tracks(unvalid_tracks, track_history):
     """
@@ -159,6 +161,43 @@ def print_current_tracks(track_history):
         print(f"Track {key}")
     print("\n")
 
+def check_if_track_is_stationary(track):
+    """
+    Checks if the track is stationary
+    """
+    first_mean, cov = track[1][0].posterior
+    last_mean, cov = track[1][-1].posterior
+    distance_travelled = 0
+    for i in range(1,len(track[1])-1):
+        mean, cov = track[1][i].posterior
+        last_mean, cov = track[1][i-1].posterior
+        x = mean[0]-last_mean[0]
+        y = mean[2]-last_mean[2]
+        distance_travelled += np.sqrt(x**2 + y**2)
+    
+    first_mean, cov = track[1][0].posterior
+    last_mean, cov = track[1][-1].posterior
+    x = first_mean[0]-last_mean[0]
+    y = first_mean[2]-last_mean[2]
+    distance_from_start_to_end = np.sqrt(x**2 + y**2)
+
+    track_id = track[0]
+    track_start_time = track[1][0].timestamp
+    track_end_time = track[1][-1].timestamp
+    track_time = track_end_time - track_start_time
+    track_speed = distance_from_start_to_end/track_time
+    track_speed_knots = 1.94384449*track_speed
+    # print(f"Duration of track {track_id} = {track_time:.2f} seconds")
+    # print(f"Distance from start to end of track {track_id} = {distance_from_start_to_end:.2f} meters")
+    # print(f"Speed of track {track_id} = {track_speed_knots:.2f} knots")
+    # print("\n")
+    if (distance_from_start_to_end < 30) or (distance_travelled < 30):
+        return True
+    else:
+        return False
+    
+
+
 def histogram_of_tracks_duration(wokring_directory, track_history, reset=False):
     """
     Saves the duration of the tracks in a npy file, which later can be used to plot a histogram of the track duration
@@ -166,17 +205,17 @@ def histogram_of_tracks_duration(wokring_directory, track_history, reset=False):
     npy_file = f"{wokring_directory}/code/npy_files/track_duration.npy"
     if not os.path.exists(npy_file) or reset:
         tracks_duration_dict = {}
-        tracks_duration_dict["0-20"] = 0
-        tracks_duration_dict["20-40"] = 0
-        tracks_duration_dict["40-60"] = 0
-        tracks_duration_dict["60-80"] = 0
-        tracks_duration_dict["80-100"] = 0
-        tracks_duration_dict["100-120"] = 0
-        tracks_duration_dict["120-140"] = 0
-        tracks_duration_dict["140-160"] = 0
-        tracks_duration_dict["160-180"] = 0
-        tracks_duration_dict["180-200"] = 0
-        tracks_duration_dict[">200"] = 0
+        tracks_duration_dict["0-20"] = [0,0]
+        tracks_duration_dict["20-40"] = [0,0]
+        tracks_duration_dict["40-60"] = [0,0]
+        tracks_duration_dict["60-80"] = [0,0]
+        tracks_duration_dict["80-100"] = [0,0]
+        tracks_duration_dict["100-120"] = [0,0]
+        tracks_duration_dict["120-140"] = [0,0]
+        tracks_duration_dict["140-160"] = [0,0]
+        tracks_duration_dict["160-180"] = [0,0]
+        tracks_duration_dict["180-200"] = [0,0]
+        tracks_duration_dict[">200"] = [0,0]
         np.save(npy_file,tracks_duration_dict)
 
     tracks_duration_dict = np.load(npy_file,allow_pickle=True).item()
@@ -186,34 +225,71 @@ def histogram_of_tracks_duration(wokring_directory, track_history, reset=False):
         track_start_time = track[1][0].timestamp
         track_end_time = track[1][-1].timestamp
         track_time = track_end_time - track_start_time
-        track_durations.append(track_time)
-
-    
-    for duration in track_durations:
-        if duration < 20:
-            tracks_duration_dict["0-20"] += 1
-        elif 20 <= duration < 40:
-            tracks_duration_dict["20-40"] += 1
-        elif 40 <= duration < 60:
-            tracks_duration_dict["40-60"] += 1
-        elif 60 <= duration < 80:
-            tracks_duration_dict["60-80"] += 1
-        elif 80 <= duration < 100:
-            tracks_duration_dict["80-100"] += 1
-        elif 100 <= duration < 120:
-            tracks_duration_dict["100-120"] += 1
-        elif 120 <= duration < 140:
-            tracks_duration_dict["120-140"] += 1
-        elif 140 <= duration < 160:
-            tracks_duration_dict["140-160"] += 1
-        elif 160 <= duration < 180:
-            tracks_duration_dict["160-180"] += 1
-        elif 180 <= duration < 200:
-            tracks_duration_dict["180-200"] += 1
+        if check_if_track_is_stationary(track):
+            track_durations.append([track_time,1])
         else:
-            tracks_duration_dict[">200"] += 1
+            track_durations.append([track_time,0])
+
+    for duration,stationary in track_durations:
+        if duration < 20:
+            if stationary:
+                tracks_duration_dict["0-20"][1] += 1
+            else:
+                tracks_duration_dict["0-20"][0] += 1
+
+        elif 20 <= duration < 40:
+            if stationary:
+                tracks_duration_dict["20-40"][1] += 1
+            else:
+                tracks_duration_dict["20-40"][0] += 1
+        elif 40 <= duration < 60:
+            if stationary:
+                tracks_duration_dict["40-60"][1] += 1
+            else:
+                tracks_duration_dict["40-60"][0] += 1
+        elif 60 <= duration < 80:
+            if stationary:
+                tracks_duration_dict["60-80"][1] += 1
+            else:
+                tracks_duration_dict["60-80"][0] += 1
+        elif 80 <= duration < 100:
+            if stationary:
+                tracks_duration_dict["80-100"][1] += 1
+            else:
+                tracks_duration_dict["80-100"][0] += 1
+        elif 100 <= duration < 120:
+            if stationary:
+                tracks_duration_dict["100-120"][1] += 1
+            else:
+                tracks_duration_dict["100-120"][0] += 1
+        elif 120 <= duration < 140:
+            if stationary:
+                tracks_duration_dict["120-140"][1] += 1
+            else:
+                tracks_duration_dict["120-140"][0] += 1
+        elif 140 <= duration < 160:
+            if stationary:
+                tracks_duration_dict["140-160"][1] += 1
+            else:
+                tracks_duration_dict["140-160"][0] += 1
+        elif 160 <= duration < 180:
+            if stationary:
+                tracks_duration_dict["160-180"][1] += 1
+            else:
+                tracks_duration_dict["160-180"][0] += 1
+        elif 180 <= duration < 200:
+            if stationary:
+                tracks_duration_dict["180-200"][1] += 1
+            else:
+                tracks_duration_dict["180-200"][0] += 1
+        else:
+            if stationary:
+                tracks_duration_dict[">200"][1] += 1
+            else:
+                tracks_duration_dict[">200"][0] += 1
 
     np.save(f"{wokring_directory}/code/npy_files/track_duration.npy",tracks_duration_dict)
+    #rint(tracks_duration_dict)
 
 def plot_histogram_of_tracks_duration(wokring_directory):
     """
@@ -223,11 +299,15 @@ def plot_histogram_of_tracks_duration(wokring_directory):
     fig, ax = plt.subplots(figsize=(12, 5))
 
     # Get a list of colors for each bar
-    colors = plt.cm.viridis(np.linspace(0, 1, len(tracks_duration_dict)))
+    #colors = plt.cm.viridis(np.linspace(0, 1, len(tracks_duration_dict)))
 
-    ax.bar(tracks_duration_dict.keys(), tracks_duration_dict.values(), color=colors)
+    data1 = [value[0] for value in tracks_duration_dict.values()]
+    data2 = [value[1] for value in tracks_duration_dict.values()]
+    ax.bar(tracks_duration_dict.keys(), data1, color='#1f77b4', label='Moving tracks')
+    ax.bar(tracks_duration_dict.keys(), data2, color='#2ca02c',bottom=data1, label='Stationary tracks')
     ax.set_xlabel('Duration of tracks [s]',fontsize=15)
     ax.set_ylabel('Number of tracks',fontsize=15)
+    ax.legend(fontsize=15)
     plt.tick_params(axis='both', which='major', labelsize=12)
     plt.savefig(f"{os.path.dirname(wokring_directory)}/radar_tracking_results/histogram_track_duration.png",dpi=400)
     print(f"Saved histogram of track duration to {os.path.dirname(wokring_directory)}/radar_tracking_results/histogram_track_duration.png")
@@ -266,3 +346,18 @@ def remove_files(root,path_list,counter):
                 
     print(f"Removed {counter_local} files of {len(files_to_be_skipped)} files given by the txt file")
     return counter
+
+
+def plot_only_map(wokring_directory):
+    # Below is code for only plotting the map with the defined areas
+    plot = plotting.ScenarioPlot(wokring_directory, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename="", dir_name="", resolution=400)
+   
+    # rectangleA = RectangleA()
+    # rectangleB = RectangleB()
+    # rectangleC = RectangleC()
+    # rectangleD = RectangleD()
+    # rectangleE = RectangleE()
+    # rectangleF = RectangleF()
+    # rectangles = [rectangleA,rectangleB,rectangleC,rectangleD,rectangleE,rectangleF] 
+
+    plotting.plot_only_map(wokring_directory,radar_circle=True)
