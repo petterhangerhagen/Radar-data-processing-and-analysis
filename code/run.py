@@ -17,7 +17,8 @@ from parameters import tracker_params, measurement_params, process_params, track
 from tracking import constructs, utilities, filters, models, initiators, terminators, managers, associators, trackers
 
 
-#username = os.getenv('USERNAME') if os.name == 'nt' else os.getenv('USER')
+radar_data_path = "/home/aflaptop/Documents/radar_data"
+wokring_directory = "/home/aflaptop/Documents/radar_tracker"
 
 def setup_manager():
     if IMM_off:
@@ -113,46 +114,48 @@ if __name__ == '__main__':
 
     ## All data
     if import_selection == 0:
-        root = "/home/aflaptop/Documents/radar_data/"
+        root = radar_data_path
         path_list = glob.glob(os.path.join(root,'**' ,'*.json'))
 
     ## Specific data
     elif import_selection == 1:
-        root = "/home/aflaptop/Documents/radar_data/data_aug_15-18"
-        # root = "/home/aflaptop/Documents/radar_data/data_aug_18-19"
-        # root = "/home/aflaptop/Documents/radar_data/data_aug_22-23"
-        # root = "/home/aflaptop/Documents/radar_data/data_aug_25-26-27"
-        # root = "/home/aflaptop/Documents/radar_data/data_aug_28-29-30-31"
-        # root = "/home/aflaptop/Documents/radar_data/data_sep_1-2-3-4-5-6-7"
-        # root = "/home/aflaptop/Documents/radar_data/data_sep_8-9-11-14"
-        # root = "/home/aflaptop/Documents/radar_data/data_sep_17-18-19-24"
+        root = f"{radar_data_path}/data_aug_15-18"
+        root = f"{radar_data_path}/data_aug_18-19"
+        root = f"{radar_data_path}/data_aug_22-23"
+        root = f"{radar_data_path}/data_aug_25-26-27"
+        root = f"{radar_data_path}/data_aug_28-29-30-31"
+        root = f"{radar_data_path}/data_sep_1-2-3-4-5-6-7"
+        root = f"{radar_data_path}/data_sep_8-9-11-14"
+        root = f"{radar_data_path}/data_sep_17-18-19-24"
         path_list = glob.glob(os.path.join(root, '*.json'))
     
 
     # Multi target scenarios
     elif import_selection == 2:
-        root = "/home/aflaptop/Documents/radar_data/"
-        txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt"
+        root = radar_data_path
+        txt_filename = f"{wokring_directory}/code/utilities/multi_target/multi_target_scenarios.txt"
+        #txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt"
         path_list = util.find_files(root,txt_filename)
         
 
     # Merged measurements
     elif import_selection == 3:
-        root = "/home/aflaptop/Documents/radar_data/"
-        txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt"
+        root = radar_data_path
+        txt_filename = f"{wokring_directory}/code/utilities/merged_measurements/merged_measurements.txt"
         path_list = util.find_files(root,txt_filename)
         
 
     # Multi path scenarios
     elif import_selection == 4:
-        root = "/home/aflaptop/Documents/radar_data/"
-        txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_scenarios.txt"
+        root = radar_data_path
+        txt_filename = f"{wokring_directory}/code/utilities/multi_path/multi_path_scenarios.txt"
         path_list = util.find_files(root,txt_filename)
 
 
     # Single scenario
     elif import_selection == 5:
-        path_list = ["/home/aflaptop/Documents/radar_data/data_sep_17-18-19-24/rosbag_2023-09-17-12-12-38.json"]
+        root = radar_data_path
+        path_list = [f"{root}/data_sep_17-18-19-24/rosbag_2023-09-17-12-12-38.json"]
     
     # Empty list
     else: 
@@ -162,7 +165,7 @@ if __name__ == '__main__':
     number_of_merged_measurements_scenarios = 0
     number_of_multi_path_scenarios = 0
     for i,filename in enumerate(path_list):
-        if True:
+        if i<1:
             print(f'File number {i+1} of {len(path_list)}')
             print(f"Curent file: {os.path.basename(filename)}\n")
 
