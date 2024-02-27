@@ -1,3 +1,4 @@
+*.npy
 /radar_tracker_virtual_env/
 /code/__pycache__/
 /code/utilities/__pycache__/
@@ -7,4 +8,3 @@ code/utilities/multi_path/__pycache__
 code/utilities/multi_target/__pycache__
 *.pyc
 *.png
-*.npy

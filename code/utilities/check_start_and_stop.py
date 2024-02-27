@@ -8,6 +8,7 @@ Description:
 
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 class RectangleA:
     def __init__(self, bottom_left=[40,-60], top_right=[118,18]): # earlier [-120,-40], [-30,40]
@@ -103,12 +104,18 @@ class RectangleF:
 class CountMatrix:
     def __init__(self, wokring_directory, reset=False):
         self.wokring_directory = wokring_directory
-        #self.file_name = "/home/aflaptop/Documents/radar_tracker/code/npy_files/count_matrix.npy"
         self.file_name = f"{self.wokring_directory}/code/npy_files/count_matrix.npy"
+        if not os.path.exists(self.file_name):
+            print("Creating count matrix")
+            self.count_matrix = np.zeros((6,6))
+            np.save(self.file_name, self.count_matrix)
+
         self.count_matrix = np.load(self.file_name)
+
         if reset:
             print("Resetting count matrix")
             self.count_matrix = np.zeros((6,6))
+
         self.unvalidated_track = 0
         self.number_of_tracks = 0
         self.number_of_tracks_on_diagonal = 0
@@ -116,6 +123,11 @@ class CountMatrix:
 
         # self.average_length_matrix_filename = "/home/aflaptop/Documents/radar_tracker/code/npy_files/average_length_matrix.npy"
         self.average_length_matrix_filename = f"{self.wokring_directory}/code/npy_files/average_length_matrix.npy"
+        if not os.path.exists(self.average_length_matrix_filename):
+            print("Creating average length matrix")
+            self.average_length_matrix = np.zeros((6,6))
+            np.save(self.average_length_matrix_filename, self.average_length_matrix)
+            
         self.average_length_matrix = np.load(self.average_length_matrix_filename)
         if reset:
             #print("Resetting average lenght matrix")

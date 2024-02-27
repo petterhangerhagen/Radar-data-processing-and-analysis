@@ -138,8 +138,8 @@ def print_current_tracks(track_history):
 
 def histogram_of_tracks_duration(wokring_directory, track_history, reset=False):
     # tracks_duration_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration.npy",allow_pickle=True).item()
-    tracks_duration_dict = np.load(f"{wokring_directory}/code/npy_files/track_duration.npy",allow_pickle=True).item()
-    if reset:
+    npy_file = f"{wokring_directory}/code/npy_files/track_duration.npy"
+    if not os.path.exists(npy_file) or reset:
         tracks_duration_dict = {}
         tracks_duration_dict["0-20"] = 0
         tracks_duration_dict["20-40"] = 0
@@ -152,6 +152,22 @@ def histogram_of_tracks_duration(wokring_directory, track_history, reset=False):
         tracks_duration_dict["160-180"] = 0
         tracks_duration_dict["180-200"] = 0
         tracks_duration_dict[">200"] = 0
+        np.save(npy_file,tracks_duration_dict)
+
+    tracks_duration_dict = np.load(npy_file,allow_pickle=True).item()
+    # if reset:
+    #     tracks_duration_dict = {}
+    #     tracks_duration_dict["0-20"] = 0
+    #     tracks_duration_dict["20-40"] = 0
+    #     tracks_duration_dict["40-60"] = 0
+    #     tracks_duration_dict["60-80"] = 0
+    #     tracks_duration_dict["80-100"] = 0
+    #     tracks_duration_dict["100-120"] = 0
+    #     tracks_duration_dict["120-140"] = 0
+    #     tracks_duration_dict["140-160"] = 0
+    #     tracks_duration_dict["160-180"] = 0
+    #     tracks_duration_dict["180-200"] = 0
+    #     tracks_duration_dict[">200"] = 0
 
     track_durations = []
     for track in track_history.items():
@@ -190,7 +206,7 @@ def histogram_of_tracks_duration(wokring_directory, track_history, reset=False):
 
 def plot_histogram_of_tracks_duration(wokring_directory):
     # tracks_duration_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration_finished.npy",allow_pickle=True).item()
-    tracks_duration_dict = np.load(f"{wokring_directory}/code/npy_files/track_duration_finished.npy",allow_pickle=True).item()
+    tracks_duration_dict = np.load(f"{wokring_directory}/code/npy_files/track_duration.npy",allow_pickle=True).item()
     fig, ax = plt.subplots(figsize=(12, 5))
 
     # Get a list of colors for each bar

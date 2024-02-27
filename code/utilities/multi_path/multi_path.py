@@ -78,7 +78,6 @@ class MultiPath:
         save_path = f"{self.wokring_directory}/code/utilities/multi_path/multi_path_plots/for_visual_inspection"
         file_name = filename.split(".")[0] + ".png"
         file_name = file_name.split("/")[-1]
-        print(file_name)
         plt.savefig(os.path.join(save_path, file_name))
         plt.close
 
@@ -99,7 +98,6 @@ class MultiPath:
         save_path = f"{self.wokring_directory}/code/utilities/multi_path/multi_path_plots"
         file_name = filename.split(".")[0] + ".png"
         file_name = file_name.split("/")[-1]
-        print(file_name)
         plt.savefig(os.path.join(save_path, file_name))
         plt.close
     

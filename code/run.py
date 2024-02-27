@@ -99,7 +99,7 @@ if __name__ == '__main__':
     check_for_multi_target_scenarios = 0
     check_for_merged_measurements = 0
     check_for_multi_path_scenarios = 0
-    counting_matrix = 0
+    counting_matrix = 1
     reset_count_matrix = 0
     
     # Define count matrix
@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
     ### Import data ###
         
-    import_selection = 1
+    import_selection = 4
     ###################
 
 
@@ -221,7 +221,7 @@ if __name__ == '__main__':
                 if merged_measurement.merged_measurements(wokring_directory, filename, manager.track_history, plot_scenarios=True, return_true_or_false=True):
                     number_of_merged_measurements_scenarios += 1
                     #txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt"
-                    txt_filename = f"{wokring_directory}code/utilities/merged_measurements/merged_measurements.txt"
+                    txt_filename = f"{wokring_directory}/code/utilities/merged_measurements/merged_measurements.txt"
                     util.write_filenames_to_txt(filename, txt_filename)
 
 
@@ -262,7 +262,7 @@ if __name__ == '__main__':
                 if multi_target_scenarios(manager.track_history):
                     number_of_multiple_target_scenarios += 1
                     # txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt"
-                    txt_filename = f"{wor}/code/utilities/multi_target/multi_target_scenarios.txt"
+                    txt_filename = f"{wokring_directory}/code/utilities/multi_target/multi_target_scenarios.txt"
                     util.write_filenames_to_txt(filename, txt_filename)
 
                     if plot_statement:
@@ -293,7 +293,7 @@ if __name__ == '__main__':
                     
     #util.plot_histogram_of_tracks_duration()
     if check_for_multi_target_scenarios:
-        print(f"Number of multi-path scenarios: {number_of_multi_path_scenarios}\n")
+        print(f"Number of multi-target scenarios: {number_of_multiple_target_scenarios}\n")
     if check_for_merged_measurements:
         print(f"Number of merged measurement scenarios: {number_of_merged_measurements_scenarios}\n")
     if check_for_multi_path_scenarios:
@@ -304,12 +304,11 @@ if __name__ == '__main__':
     print("End of run.py")
     if counting_matrix:
         unvalidated_tracks = {"Number of tracks": count_matrix.number_of_tracks,"Unvalidated tracks": count_matrix.unvalidated_track}
-        print(f"unvalidated tracks: {count_matrix.unvalidated_track}\n")
+        #print(f"unvalidated tracks: {count_matrix.unvalidated_track}\n")
         # np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/unvalidated_tracks.npy",unvalidated_tracks)
         np.save(f"{wokring_directory}/code/npy_files/unvalidated_tracks.npy",unvalidated_tracks)
         files_with_tracks_on_diagonal = {"Number of tracks on diagonal":count_matrix.number_of_tracks_on_diagonal,"Files":count_matrix.files_with_tracks_on_diagonal}
-        # np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
         np.save(f"{wokring_directory}/code/npy_files/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
         count_matrix.track_average_length()
-        print(f"average length matrix: {count_matrix.average_length_matrix}\n")
+        #print(f"average length matrix: {count_matrix.average_length_matrix}\n")
     
