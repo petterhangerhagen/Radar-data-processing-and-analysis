@@ -98,7 +98,7 @@ def radar_data_json_file(json_file):
     timestamps = np.reshape(timestamps,(len(timestamps),1))
     return measurements, radar, timestamps
 
-def create_dict(filename, track_history):
+def create_dict(wokring_directory, filename, track_history):
         """
         Creates a dictionary for the measurements and tracks and saves them to a directory.
         Where the keys are the timestamps and the values are the measurements and tracks at that timestamp.
@@ -143,13 +143,15 @@ def create_dict(filename, track_history):
                 track_dict[track.timestamp].append([index, track.posterior[0][0],track.posterior[0][2], track.posterior[1][0:3:2,0:3:2], selected_color])
 
         # Saving the dictionaries
-        np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_dict.npy",track_dict)
-        np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/measurement_dict.npy",measurement_dict)
+        # np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_dict.npy",track_dict)
+        # np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/measurement_dict.npy",measurement_dict)
+        np.save(f"{wokring_directory}/code/npy_files/track_dict.npy",track_dict)
+        np.save(f"{wokring_directory}/code/npy_files/measurement_dict.npy",measurement_dict)
        
         return measurement_dict, track_dict
 
 
-def merged_measurements(filename,track_history, plot_scenarios=False, return_true_or_false=True):
+def merged_measurements(wokring_directory, filename,track_history, plot_scenarios=False, return_true_or_false=True):
     """
     Function for finding and visualizing the merged measurements.
     The function reads out the measurement dictionary and finds all measurements which are close to each other at the same timestamp.
@@ -161,7 +163,8 @@ def merged_measurements(filename,track_history, plot_scenarios=False, return_tru
     """
 
     vertices = [(100, 0), (100, -40), (0, -80), (-50,-110), (-90, -120), (-105, -110),(-50,-60),(-25,-20),(0,0)]
-    data = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/measurement_dict.npy",allow_pickle=True).item()
+    # data = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/measurement_dict.npy",allow_pickle=True).item()
+    data = np.load(f"{wokring_directory}/code/npy_files/measurement_dict.npy",allow_pickle=True).item()
     timestamps = list(data.keys())
     x_list = []
     y_list = []
@@ -249,7 +252,8 @@ def merged_measurements(filename,track_history, plot_scenarios=False, return_tru
         if number_of_merged_measurements > 0:
             file_name = os.path.basename(filename)
             file_name = os.path.splitext(file_name)[0]
-            save_path = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements_plots"
+            # save_path = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements_plots"
+            save_path = f"{wokring_directory}/code/utilities/merged_measurements/merged_measurements_plots"
             save_path = os.path.join(save_path,file_name + ".png")
             print(f"Saving plot to {save_path}")
             plt.savefig(save_path)

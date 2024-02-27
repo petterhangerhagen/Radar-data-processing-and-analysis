@@ -45,7 +45,8 @@ class MultiPathChild:
         ax.plot(self.x, self.y, marker="o", color="red")
 
 class MultiPath:
-    def __init__(self):
+    def __init__(self,wokring_directory):
+        self.wokring_directory = wokring_directory
         self.multi_path_scenarios = {}
         
 
@@ -73,7 +74,8 @@ class MultiPath:
                     multi_path.plot_child(ax)
 
         plot_next_to_multi_path.create_to_multi_path(ax2, measurements_history, track_history, timestamps_history)
-        save_path = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_plots/for_visual_inspection"
+        # save_path = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_plots/for_visual_inspection"
+        save_path = f"{self.wokring_directory}/code/utilities/multi_path/multi_path_plots/for_visual_inspection"
         file_name = filename.split(".")[0] + ".png"
         file_name = file_name.split("/")[-1]
         print(file_name)
@@ -93,7 +95,8 @@ class MultiPath:
                 else:
                     multi_path.plot_child(ax)
 
-        save_path = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_plots"
+        # save_path = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_plots"
+        save_path = f"{self.wokring_directory}/code/utilities/multi_path/multi_path_plots"
         file_name = filename.split(".")[0] + ".png"
         file_name = file_name.split("/")[-1]
         print(file_name)
@@ -105,9 +108,10 @@ class MultiPath:
             return True
 
 
-def check_for_multi_path(filename, plot_next_to_multi_path, measurements_history, track_history, timestamps_history, plot_statement=False):
+def check_for_multi_path(wokring_directory, filename, plot_next_to_multi_path, measurements_history, track_history, timestamps_history, plot_statement=False):
     print("Checking for multi path")
-    measurements_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/measurement_dict.npy",allow_pickle=True).item()
+    # measurements_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/measurement_dict.npy",allow_pickle=True).item()
+    measurements_dict = np.load(f"{wokring_directory}/code/npy_files/measurement_dict.npy",allow_pickle=True).item()
  
     potential_multi_paths = []
     for timestamp, measurements in measurements_dict.items():
@@ -124,7 +128,7 @@ def check_for_multi_path(filename, plot_next_to_multi_path, measurements_history
                     multi_path_parent.add_measurement(timestamp, measurement)
                     potential_multi_paths.append(multi_path_parent)
                     
-    multi_path = MultiPath()
+    multi_path = MultiPath(wokring_directory)
     for multi_path_parent in potential_multi_paths:
         timestamp = multi_path_parent.timestamp
 

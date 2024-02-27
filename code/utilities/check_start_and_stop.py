@@ -101,8 +101,10 @@ class RectangleF:
 
 
 class CountMatrix:
-    def __init__(self,reset=False):
-        self.file_name = "/home/aflaptop/Documents/radar_tracker/code/npy_files/count_matrix.npy"
+    def __init__(self, wokring_directory, reset=False):
+        self.wokring_directory = wokring_directory
+        #self.file_name = "/home/aflaptop/Documents/radar_tracker/code/npy_files/count_matrix.npy"
+        self.file_name = f"{self.wokring_directory}/code/npy_files/count_matrix.npy"
         self.count_matrix = np.load(self.file_name)
         if reset:
             print("Resetting count matrix")
@@ -112,7 +114,8 @@ class CountMatrix:
         self.number_of_tracks_on_diagonal = 0
         self.files_with_tracks_on_diagonal = []
 
-        self.average_length_matrix_filename = "/home/aflaptop/Documents/radar_tracker/code/npy_files/average_length_matrix.npy"
+        # self.average_length_matrix_filename = "/home/aflaptop/Documents/radar_tracker/code/npy_files/average_length_matrix.npy"
+        self.average_length_matrix_filename = f"{self.wokring_directory}/code/npy_files/average_length_matrix.npy"
         self.average_length_matrix = np.load(self.average_length_matrix_filename)
         if reset:
             #print("Resetting average lenght matrix")
@@ -190,5 +193,5 @@ def plot_rectangles():
 
     plt.show()
 
-if __name__ == "__main__":
-    plot_rectangles()
+# if __name__ == "__main__":
+#     plot_rectangles()

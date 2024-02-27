@@ -17,8 +17,8 @@ from parameters import tracker_params, measurement_params, process_params, track
 from tracking import constructs, utilities, filters, models, initiators, terminators, managers, associators, trackers
 
 
-radar_data_path = "/home/aflaptop/Documents/radar_data"
-wokring_directory = "/home/aflaptop/Documents/radar_tracker"
+radar_data_path = "/home/petter/radar_data"
+wokring_directory = "/home/petter/Radar-data-processing-and-analysis"
 
 def setup_manager():
     if IMM_off:
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     
     # Define count matrix
     if counting_matrix:
-        count_matrix = CountMatrix(reset=reset_count_matrix)
+        count_matrix = CountMatrix(wokring_directory, reset=reset_count_matrix)
 
 
 
@@ -169,7 +169,7 @@ if __name__ == '__main__':
             print(f"Curent file: {os.path.basename(filename)}\n")
 
             # read out data
-            measurements, ownship, timestamps = import_radar_data.radar_data_json_file(filename,relative_to_map=relative_to_map)
+            measurements, ownship, timestamps = import_radar_data.radar_data_json_file(wokring_directory, filename, relative_to_map=relative_to_map)
 
             # Check i there are any measurements in the file
             if len(measurements) == 0:
@@ -212,11 +212,12 @@ if __name__ == '__main__':
 
             # Check for merged measurements
             if check_for_merged_measurements and remove_track_with_low_coherence_factor and not relative_to_map:
-                measurement_dict, track_dict = merged_measurement.create_dict(filename, manager.track_history)
+                measurement_dict, track_dict = merged_measurement.create_dict(wokring_directory, filename, manager.track_history)
 
-                if merged_measurement.merged_measurements(filename, manager.track_history, plot_scenarios=True, return_true_or_false=True):
+                if merged_measurement.merged_measurements(wokring_directory, filename, manager.track_history, plot_scenarios=True, return_true_or_false=True):
                     number_of_merged_measurements_scenarios += 1
-                    txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt"
+                    #txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt"
+                    txt_filename = f"{wokring_directory}code/utilities/merged_measurements/merged_measurements.txt"
                     util.write_filenames_to_txt(filename, txt_filename)
 
 
@@ -224,10 +225,10 @@ if __name__ == '__main__':
             if plot_statement:
                 # plotting
                 if relative_to_map:
-                    plot = plotting.ScenarioPlot(measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
+                    plot = plotting.ScenarioPlot(wokring_directory, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
                     plot.create_with_map(measurements, manager.track_history, ownship, timestamps)
                 else:
-                    plot = plotting.ScenarioPlot(measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
+                    plot = plotting.ScenarioPlot(wokring_directory, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
                     plot.create(measurements, manager.track_history, ownship, timestamps)
             
                 # rectangleA = RectangleA()
@@ -237,12 +238,12 @@ if __name__ == '__main__':
                 # rectangleE = RectangleE()
                 # rectangleF = RectangleF()
                 # rectangles = [rectangleA,rectangleB,rectangleC,rectangleD,rectangleE,rectangleF] 
-                # plotting.plot_only_map(rectangles)
+                # plotting.plot_only_map(wokring_directory, rectangles)
                 
-            if video_statement:
+            if video_statement and not relative_to_map:
                 inp = input("Do you want to create a video? (y/n): ")
                 if inp == "y":
-                    video_manager = video.Video(add_covariance_ellipses=True, gamma=1, filename=filename,resolution=100,fps=1)
+                    video_manager = video.Video(wokring_directory, add_covariance_ellipses=True, gamma=1, filename=filename,resolution=100,fps=1)
                     video_manager.create_video(measurements, manager.track_history, ownship, timestamps)
                 else:
                     print("No video created")
@@ -256,30 +257,32 @@ if __name__ == '__main__':
             if check_for_multi_target_scenarios and remove_track_with_low_coherence_factor and not relative_to_map:
                 if multi_target_scenarios(manager.track_history):
                     number_of_multiple_target_scenarios += 1
-                    txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt"
+                    # txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt"
+                    txt_filename = f"{wor}/code/utilities/multi_target/multi_target_scenarios.txt"
                     util.write_filenames_to_txt(filename, txt_filename)
 
                     if plot_statement:
-                        move_plot_to_this_directory(filename, dir_name)
+                        move_plot_to_this_directory(wokring_directory, filename, dir_name)
                     #print(f"Number of multiple target scenarios: {number_of_multiple_target_scenarios}\n")
 
                 #print(f"Number of multi-target scenarios: {number_of_multiple_target_scenarios}\n")
 
-            # if i==0:
-            #     util.histogram_of_tracks_duration(manager.track_history,reset=True)
-            # else:
-            #     util.histogram_of_tracks_duration(manager.track_history,reset=False)
+            if i==0:
+                util.histogram_of_tracks_duration(wokring_directory, manager.track_history, reset=True)
+            else:
+                util.histogram_of_tracks_duration(wokring_directory, manager.track_history, reset=False)
             
             if check_for_multi_path_scenarios:
-                merged_measurement.create_dict(filename, manager.track_history)
+                merged_measurement.create_dict(wokring_directory, filename, manager.track_history)
 
                 if not plot_statement:
                     plot = None
 
-                if check_for_multi_path(filename, plot, measurements, manager.track_history, timestamps, plot_statement):
+                if check_for_multi_path(wokring_directory, filename, plot, measurements, manager.track_history, timestamps, plot_statement):
                     number_of_multi_path_scenarios += 1
                     print("Multi path scenario found")
-                    txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_scenarios.txt"
+                    # txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_scenarios.txt"
+                    txt_filename = f"{wokring_directory}/code/utilities/multi_path/multi_path_scenarios.txt"
                     util.write_filenames_to_txt(filename, txt_filename)
                     # with open("/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_scenarios.txt", "a") as f:
                     #     f.write(os.path.basename(filename) + "\n")
@@ -292,15 +295,17 @@ if __name__ == '__main__':
     if check_for_multi_path_scenarios:
         print(f"Number of multi-path scenarios: {number_of_multi_path_scenarios}\n")
 
-    util.plot_histogram_of_tracks_duration()
+    util.plot_histogram_of_tracks_duration(wokring_directory)
 
     print("End of run.py")
     if counting_matrix:
         unvalidated_tracks = {"Number of tracks": count_matrix.number_of_tracks,"Unvalidated tracks": count_matrix.unvalidated_track}
         print(f"unvalidated tracks: {count_matrix.unvalidated_track}\n")
-        np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/unvalidated_tracks.npy",unvalidated_tracks)
+        # np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/unvalidated_tracks.npy",unvalidated_tracks)
+        np.save(f"{wokring_directory}/code/npy_files/unvalidated_tracks.npy",unvalidated_tracks)
         files_with_tracks_on_diagonal = {"Number of tracks on diagonal":count_matrix.number_of_tracks_on_diagonal,"Files":count_matrix.files_with_tracks_on_diagonal}
-        np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
+        # np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
+        np.save(f"{wokring_directory}/code/npy_files/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
         count_matrix.track_average_length()
         print(f"average length matrix: {count_matrix.average_length_matrix}\n")
     

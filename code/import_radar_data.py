@@ -5,10 +5,10 @@ from parameters import measurement_params
 import json
 
 
-def radar_data_json_file(json_file, relative_to_map = False):
+def radar_data_json_file(wokring_directory, json_file, relative_to_map = False):
 
     if relative_to_map:
-        data = np.load(f"/home/aflaptop/Documents/radar_tracker/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
+        data = np.load(f"{wokring_directory}/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
         origin_x = data["origin_y"]
         origin_y = data["origin_x"]
 

@@ -44,7 +44,6 @@ def write_filenames_to_txt(filename, txt_filename):
         with open(txt_filename, 'a') as f:
             f.write(os.path.basename(filename) + "\n")
    
-
 def make_new_directory(wokring_directory):
     # Making new directory for the results
     #root = f"/home/aflaptop/Documents/radar_tracking_results"
@@ -137,8 +136,9 @@ def print_current_tracks(track_history):
         print(f"Track {key}")
     print("\n")
 
-def histogram_of_tracks_duration(track_history,reset=False):
-    tracks_duration_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration.npy",allow_pickle=True).item()
+def histogram_of_tracks_duration(wokring_directory, track_history, reset=False):
+    # tracks_duration_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration.npy",allow_pickle=True).item()
+    tracks_duration_dict = np.load(f"{wokring_directory}/code/npy_files/track_duration.npy",allow_pickle=True).item()
     if reset:
         tracks_duration_dict = {}
         tracks_duration_dict["0-20"] = 0
@@ -185,10 +185,12 @@ def histogram_of_tracks_duration(track_history,reset=False):
         else:
             tracks_duration_dict[">200"] += 1
             #print(f"Track duration = {duration:.2f}")
-    np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration.npy",tracks_duration_dict)
+    # np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration.npy",tracks_duration_dict)
+    np.save(f"{wokring_directory}/code/npy_files/track_duration.npy",tracks_duration_dict)
 
-def plot_histogram_of_tracks_duration():
-    tracks_duration_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration_finished.npy",allow_pickle=True).item()
+def plot_histogram_of_tracks_duration(wokring_directory):
+    # tracks_duration_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration_finished.npy",allow_pickle=True).item()
+    tracks_duration_dict = np.load(f"{wokring_directory}/code/npy_files/track_duration_finished.npy",allow_pickle=True).item()
     fig, ax = plt.subplots(figsize=(12, 5))
 
     # Get a list of colors for each bar
@@ -199,7 +201,9 @@ def plot_histogram_of_tracks_duration():
     ax.set_ylabel('Number of tracks',fontsize=15)
     #ax.set_title('Histogram of tracks duration')
     plt.tick_params(axis='both', which='major', labelsize=12)
-    plt.savefig("/home/aflaptop/Documents/radar_tracking_results/histogram_track_duration.png",dpi=400)
+    # plt.savefig("/home/aflaptop/Documents/radar_tracking_results/histogram_track_duration.png",dpi=400)
+    plt.savefig(f"{os.path.dirname(wokring_directory)}/radar_tracking_result/histogram_track_duration.png",dpi=400)
+    plt.close()
     #plt.show()
 
 def read_out_txt_file(root):

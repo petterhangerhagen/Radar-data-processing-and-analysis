@@ -20,7 +20,8 @@ class Video(object):
     """
     A class representing a plot depicitng the tracking scenario.
     """
-    def __init__(self, add_covariance_ellipses=False, gamma=3.5,filename="coord_69",resolution=100,fps=1):
+    def __init__(self, wokring_directory, add_covariance_ellipses=False, gamma=3.5,filename="coord_69",resolution=100,fps=1):
+        self.wokring_directory = wokring_directory
         self.add_covariance_ellipses = add_covariance_ellipses
         self.gamma = gamma
         self.resolution = resolution
@@ -118,13 +119,16 @@ class Video(object):
             # Saving the frame
             self.ax.set_title(f"Time: {timestamp[0]:.2f} s")
             #self.fig.savefig(f'/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp/tracker_{i+1}.png',dpi=self.resolution)
-            self.fig.savefig(f'/home/aflaptop/Documents/radar_tracking_results/videos/temp/tracker_{i+1}.png',dpi=self.resolution)
+            # self.fig.savefig(f'/home/aflaptop/Documents/radar_tracking_results/videos/temp/tracker_{i+1}.png',dpi=self.resolution)
+            temp_save_path = f'{os.path.dirname(self.wokring_directory)}/radar_tracking_result/videos/temp/tracker_{i+1}.png'
+            self.fig.savefig(temp_save_path,dpi=self.resolution)
 
             bar.update(i)
    
         # Saving the video
         #photos_file_path = "/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp"
-        photos_file_path = "/home/aflaptop/Documents/radar_tracking_results/videos/temp"
+        # photos_file_path = "/home/aflaptop/Documents/radar_tracking_results/videos/temp"
+        photos_file_path = f"{os.path.dirname(self.wokring_directory)}/radar_tracking_result/videos/temp"
         video_name = f'{photos_file_path[:-4]}{self.filename}.avi'
         images_to_video_opencv(photos_file_path, video_name, self.fps)
         print(f"\nSaving the video to {video_name}")

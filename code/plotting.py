@@ -12,7 +12,7 @@ import datetime
 from parameters import tracker_params, measurement_params, process_params, tracker_state
 from matplotlib.colors import LinearSegmentedColormap
 
-from run import radar_data_path, wokring_directory
+# from run import radar_data_path, wokring_directory
 
 # define font size, and size of plots
 matplotlib.rcParams['font.size'] = 30
@@ -22,7 +22,8 @@ class ScenarioPlot(object):
     """
     A class representing a plot depicitng the tracking scenario.
     """
-    def __init__(self, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=False, add_validation_gates=False, add_track_indexes=False, gamma=3.5,filename="coord_69",dir_name="test",resolution=600):
+    def __init__(self, wokring_directory, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=False, add_validation_gates=False, add_track_indexes=False, gamma=3.5,filename="coord_69",dir_name="test",resolution=600):
+        self.wokring_directory = wokring_directory
         self.track_marker_size = track_marker_size
         self.measurement_marker_size = measurement_marker_size
         self.add_track_indexes = add_track_indexes
@@ -88,7 +89,7 @@ class ScenarioPlot(object):
         self.fig, self.ax1 = plt.subplots(figsize=(11, 7.166666))
         
         # Plotting the occupancy grid'
-        data = np.load(f"{wokring_directory}/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
+        data = np.load(f"{self.wokring_directory}/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
         occupancy_grid = data["occupancy_grid"]
         origin_x = data["origin_x"]
         origin_y = data["origin_y"]
@@ -357,7 +358,7 @@ def find_track_limits(track_history, extra_spacing=50):
     E_max += extra_spacing
     return N_min, N_max, E_min, E_max
 
-def plot_only_map(rectangles):
+def plot_only_map(wokring_directory, rectangles):
     # Plotting the occupancy grid'
     data = np.load(f"{wokring_directory}/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
     occupancy_grid = data["occupancy_grid"]
