@@ -1,3 +1,12 @@
+"""
+Script Title: Multi Target
+Author: Petter Hangerhagen and Audun Gullikstad Hem
+Email: petthang@stud.ntnu.no
+Date: February 27, 2024
+Description: This script is inspired form Audun Gullikstad Hem mulit-target tracker (https://doi.org/10.24433/CO.3351829.v1).
+It contains a function that reads radar data from a json file and returns the measurements, radar and timestamps. Where the radar position is always zero.
+"""
+
 import scipy.io as io
 import numpy as np
 from tracking import constructs

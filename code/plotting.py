@@ -1,3 +1,13 @@
+"""
+Script Title: Plotting
+Author: Petter Hangerhagen and Audun Gullikstad Hem
+Email: petthang@stud.ntnu.no
+Date: February 27, 2024
+Description: This script is part of Audun Gullikstad Hem mulit-target tracker (https://doi.org/10.24433/CO.3351829.v1). 
+It contains functions for plotting the tracking scenario. It can plot with and without the map.
+It can also write different information to the plot, such as the track time, coherence factor and parameters, which can be used for debugging and analysis.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
@@ -11,8 +21,6 @@ from descartes import PolygonPatch
 import datetime
 from parameters import tracker_params, measurement_params, process_params, tracker_state
 from matplotlib.colors import LinearSegmentedColormap
-
-# from run import radar_data_path, wokring_directory
 
 # define font size, and size of plots
 matplotlib.rcParams['font.size'] = 30
@@ -412,7 +420,7 @@ def plot_only_map(wokring_directory, rectangles):
         ax.add_patch(PolygonPatch(rectangle, edgecolor = "#ff7f0e", facecolor = '#ff7f0e', alpha=0.3, linewidth=3.5))
         ax.annotate(name, ((x[0] + x[2])/2 - 2, (y[0] + y[2])/2 - 2), fontsize=25, color='black')
 
-    save_name = f"{wokring_directory}/radar_tracking_results/map/only_map.png"
+    save_name = f"{wokring_directory}/code/utilities/how_areas_are_defined_on_map.jpg"
     fig.savefig(save_name,dpi=400)
     print(f"Saving figure to {save_name}")
     plt.close()

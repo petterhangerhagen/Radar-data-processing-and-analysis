@@ -1,3 +1,14 @@
+"""
+Script Title: run.py
+Author: Petter Hangerhagen and Audun Gullikstad Hem
+Email: petthang@stud.ntnu.no
+Date: February 27, 2024
+Description: This script is part of Audun Gullikstad Hem mulit-target tracker (https://doi.org/10.24433/CO.3351829.v1). It is used as foundation which the code is built on.
+This script is used to run the multi-target tracker, and to check for different scenarios, such as multi-target, merged measurements, and multi-path scenarios. 
+It also filters out unvalid tracks, based on coherence factor, speed, and duration.
+The script can also be used to create videos and plots of the scenarios.
+"""
+
 import import_radar_data
 import plotting
 import video
@@ -19,11 +30,15 @@ from tracking import constructs, utilities, filters, models, initiators, termina
 warnings.filterwarnings("ignore", message="Conversion of an array with ndim > 0 to a scalar is deprecated")
 
 
-# radar_data_path = "/home/petter/radar_data"
-# wokring_directory = "/home/petter/Radar-data-processing-and-analysis"
-radar_data_path = "/home/aflaptop/Documents/radar_data"
-wokring_directory = "/home/aflaptop/Documents/radar_tracker"
+"""
+IMPORTANT: Need to change the radar_data_path and wokring_directory to the correct paths!!
+"""
+radar_data_path = "/home/petter/radar_data"
+wokring_directory = "/home/petter/Radar-data-processing-and-analysis"
+# radar_data_path = "/home/aflaptop/Documents/radar_data"
+# wokring_directory = "/home/aflaptop/Documents/radar_tracker"
 
+# setup the tracker based on the parameters in parameters.py
 def setup_manager():
     if IMM_off:
         kinematic_models = [models.CVModel(process_params['cov_CV_single'])]
@@ -78,10 +93,6 @@ def setup_manager():
     return track_manager
     
 if __name__ == '__main__':
-    """
-    All tracker parameters are imported from parameters.py, and can be changed
-    there.
-    """
     # make new directory with the current date to save results
     dir_name = util.make_new_directory(wokring_directory)
 
@@ -90,16 +101,29 @@ if __name__ == '__main__':
     single_target = tracker_state["single_target"]
     visibility_off = tracker_state["visibility_off"]
 
-    # turn on/off different functionalities
+    """
+    Below are the different statements that can be used to control different functionalities of the code.
+    plot_statement: If True, the code will plot the scenario, and save the plot in the radar_tracking_results directory. This directory will be located in the same directory as the you cloned this repo.
+    relative_to_map: If True, the code will plot the scenario relative to the map. This will use the occupancy_grid.npy file to plot the map in the background. This can not be used for video.
+    video_statement: If True, the code will create a video of the scenario. This is useful for debugging and for visualizing the resutls.
+    filter_out_unvalid_tracks: If True, the code will filter out unvalid tracks. This includes tracks with low coherence factor, low speed, and short duration.
+    check_for_multi_target_scenarios: If True, the code will check for multi target scenarios. The scenarios will be saved in a txt file in the utilities/multi_target directory. 
+    check_for_merged_measurements: If True, the code will check for merged measurements. The scenarios will be saved in a txt file in the utilities/merged_measurements directory.
+    check_for_multi_path_scenarios: If True, the code will check for multi path scenarios. The scenarios will be saved in a txt file in the utilities/multi_path directory.
+    count_and_plot_histogram_of_tracks_duration: If True, the code will count the duration of the tracks, and plot a histogram of the duration.
+    counting_matrix: If True, the code will create a counting matrix, which defines the traffic matrix. The defined areas can be seen in the code/utilities/how_areas_are_defined_on_map.jpg. The matrix will be saved in the code/npy_files directory.
+    reset_count_matrix: If True, the code will reset the counting matrix. This is useful if you want to start from scratch.
+    """
     # 1: True, 0: False
     plot_statement = 1
     relative_to_map = 0
     video_statement = 0
-    remove_track_with_low_coherence_factor = 1
+    filter_out_unvalid_tracks = 1
     check_for_multi_target_scenarios = 0
     check_for_merged_measurements = 0
     check_for_multi_path_scenarios = 0
-    counting_matrix = 1
+    count_and_plot_histogram_of_tracks_duration = 0
+    counting_matrix = 0
     reset_count_matrix = 0
     
     # Define count matrix
@@ -107,11 +131,17 @@ if __name__ == '__main__':
         count_matrix = CountMatrix(wokring_directory, reset=reset_count_matrix)
 
 
-
-
+    """
+    The import_selection variable is used to import different data. The different options are:
+    0: All data
+    1: Specific data, for example only one of the sets of data.
+    2: Multi target scenarios, this will import the data from the multi_target_scenarios.txt file.
+    3: Merged measurements, this will import the data from the merged_measurements.txt file.
+    4: Multi path scenarios, this will import the data from the multi_path_scenarios.txt file.
+    5: Single scenario, hardcode the path to the scenario you want to import.
+    """
     ### Import data ###
-        
-    import_selection = 4
+    import_selection = 5
     ###################
 
 
@@ -137,7 +167,6 @@ if __name__ == '__main__':
     elif import_selection == 2:
         root = radar_data_path
         txt_filename = f"{wokring_directory}/code/utilities/multi_target/multi_target_scenarios.txt"
-        #txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt"
         path_list = util.find_files(root,txt_filename)
         
 
@@ -164,11 +193,14 @@ if __name__ == '__main__':
     else: 
         path_list = []
 
+    # Counting the number of different scenarios
     number_of_multiple_target_scenarios = 0
     number_of_merged_measurements_scenarios = 0
     number_of_multi_path_scenarios = 0
     for i,filename in enumerate(path_list):
-        if i<1:
+        # If statement is used if not all of the imported data should be used
+        # for example if only the first 10 files should be used, if i<10
+        if True:
             print(f'File number {i+1} of {len(path_list)}')
             print(f"Curent file: {os.path.basename(filename)}\n")
 
@@ -206,16 +238,17 @@ if __name__ == '__main__':
             #util.print_current_tracks(manager.track_history)
 
             # Remove unvalid tracks
-            if remove_track_with_low_coherence_factor:
+            if filter_out_unvalid_tracks:
                 for track in unvalid_tracks:
                     del manager.track_history[track]
             
                 # Print current tracks
-                #print("After removing tracks with low coherence factor")
+                #print("After removing unvalid tracks:")
                 #util.print_current_tracks(manager.track_history)
 
             # Check for merged measurements
-            if check_for_merged_measurements and remove_track_with_low_coherence_factor and not relative_to_map:
+            # Can not be used with relative_to_map and without filter_out_unvalid_tracks
+            if check_for_merged_measurements and filter_out_unvalid_tracks and not relative_to_map:
                 measurement_dict, track_dict = merged_measurement.create_dict(wokring_directory, filename, manager.track_history)
 
                 if merged_measurement.merged_measurements(wokring_directory, filename, manager.track_history, plot_scenarios=True, return_true_or_false=True):
@@ -225,16 +258,17 @@ if __name__ == '__main__':
                     util.write_filenames_to_txt(filename, txt_filename)
 
 
-            # Video vs image
+            # Plot of the scenario
             if plot_statement:
-                # plotting
+                # Check if the scenario should be plotted relative to the map
                 if relative_to_map:
                     plot = plotting.ScenarioPlot(wokring_directory, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
                     plot.create_with_map(measurements, manager.track_history, ownship, timestamps)
                 else:
                     plot = plotting.ScenarioPlot(wokring_directory, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
                     plot.create(measurements, manager.track_history, ownship, timestamps)
-            
+
+                # Below is code for only plotting the map with the defined areas
                 # rectangleA = RectangleA()
                 # rectangleB = RectangleB()
                 # rectangleC = RectangleC()
@@ -244,6 +278,7 @@ if __name__ == '__main__':
                 # rectangles = [rectangleA,rectangleB,rectangleC,rectangleD,rectangleE,rectangleF] 
                 # plotting.plot_only_map(wokring_directory, rectangles)
                 
+            # Create video
             if video_statement and not relative_to_map:
                 inp = input("Do you want to create a video? (y/n): ")
                 if inp == "y":
@@ -252,46 +287,52 @@ if __name__ == '__main__':
                 else:
                     print("No video created")
 
+            # Check start and stop of tracks with respect to the defined areas
             if counting_matrix:
-                # Check start and stop of tracks
                 count_matrix.check_start_and_stop(track_history=manager.track_history,filename=filename)
 
 
-             # Check for multi-target scenarios
-            if check_for_multi_target_scenarios and remove_track_with_low_coherence_factor and not relative_to_map:
+            # Check for multi-target scenarios
+            # Can not be used with relative_to_map and without filter_out_unvalid_tracks
+            if check_for_multi_target_scenarios and filter_out_unvalid_tracks and not relative_to_map:
                 if multi_target_scenarios(manager.track_history):
                     number_of_multiple_target_scenarios += 1
-                    # txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_target/multi_target_scenarios.txt"
                     txt_filename = f"{wokring_directory}/code/utilities/multi_target/multi_target_scenarios.txt"
                     util.write_filenames_to_txt(filename, txt_filename)
-
+                    
+                    # Move plot to the multi_target directory
                     if plot_statement:
                         move_plot_to_this_directory(wokring_directory, filename, dir_name)
-                    #print(f"Number of multiple target scenarios: {number_of_multiple_target_scenarios}\n")
+                
+                        
 
-                #print(f"Number of multi-target scenarios: {number_of_multiple_target_scenarios}\n")
-
-            if i==0:
-                util.histogram_of_tracks_duration(wokring_directory, manager.track_history, reset=True)
-            else:
-                util.histogram_of_tracks_duration(wokring_directory, manager.track_history, reset=False)
-            
-            if check_for_multi_path_scenarios:
+            # Check for multi-path scenarios
+            # Can not be used with relative_to_map and without filter_out_unvalid_tracks
+            if check_for_multi_path_scenarios and filter_out_unvalid_tracks and not relative_to_map:
                 merged_measurement.create_dict(wokring_directory, filename, manager.track_history)
 
+                # Need to pass the plot information the the function in the next step, if plot_statement is not true. 
                 if not plot_statement:
                     plot = None
 
                 if check_for_multi_path(wokring_directory, filename, plot, measurements, manager.track_history, timestamps, plot_statement):
                     number_of_multi_path_scenarios += 1
                     print("Multi path scenario found")
-                    # txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_scenarios.txt"
                     txt_filename = f"{wokring_directory}/code/utilities/multi_path/multi_path_scenarios.txt"
                     util.write_filenames_to_txt(filename, txt_filename)
-                    # with open("/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_scenarios.txt", "a") as f:
-                    #     f.write(os.path.basename(filename) + "\n")
-                    
-    #util.plot_histogram_of_tracks_duration()
+            
+
+
+            # Count the duration of the tracks
+            if count_and_plot_histogram_of_tracks_duration:
+                if i==0:
+                    util.histogram_of_tracks_duration(wokring_directory, manager.track_history, reset=True)
+                else:
+                    util.histogram_of_tracks_duration(wokring_directory, manager.track_history, reset=False)
+                
+    # Plot histogram of tracks duration
+    if count_and_plot_histogram_of_tracks_duration:
+        util.plot_histogram_of_tracks_duration(wokring_directory)
     if check_for_multi_target_scenarios:
         print(f"Number of multi-target scenarios: {number_of_multiple_target_scenarios}\n")
     if check_for_merged_measurements:
@@ -299,16 +340,17 @@ if __name__ == '__main__':
     if check_for_multi_path_scenarios:
         print(f"Number of multi-path scenarios: {number_of_multi_path_scenarios}\n")
 
-    util.plot_histogram_of_tracks_duration(wokring_directory)
 
-    print("End of run.py")
     if counting_matrix:
+        # Save unvalidated tracks
         unvalidated_tracks = {"Number of tracks": count_matrix.number_of_tracks,"Unvalidated tracks": count_matrix.unvalidated_track}
-        #print(f"unvalidated tracks: {count_matrix.unvalidated_track}\n")
-        # np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/unvalidated_tracks.npy",unvalidated_tracks)
         np.save(f"{wokring_directory}/code/npy_files/unvalidated_tracks.npy",unvalidated_tracks)
+
+        # Save files with tracks on diagonal
         files_with_tracks_on_diagonal = {"Number of tracks on diagonal":count_matrix.number_of_tracks_on_diagonal,"Files":count_matrix.files_with_tracks_on_diagonal}
         np.save(f"{wokring_directory}/code/npy_files/files_with_track_on_diagonal.npy",files_with_tracks_on_diagonal)
+
+        # Compute average length of tracks
         count_matrix.track_average_length()
-        #print(f"average length matrix: {count_matrix.average_length_matrix}\n")
     
+    print("End of run.py")

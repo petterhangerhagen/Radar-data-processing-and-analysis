@@ -1,3 +1,12 @@
+"""
+Script Title: Video
+Author: Petter Hangerhagen and Audun Gullikstad Hem
+Email: petthang@stud.ntnu.no
+Date: February 27, 2024
+Description: This script is not directly from Audun Gullikstad Hem mulit-target tracker (https://doi.org/10.24433/CO.3351829.v1), but it is inspired by the plotting script which is from the tracker. 
+It is used to create a video of the tracking scenario.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
@@ -26,7 +35,6 @@ class Video(object):
         self.gamma = gamma
         self.resolution = resolution
         self.filename = filename.split("/")[-1].split("_")[-1].split(".")[0]
-        #self.dir_name = dir_name
         self.fps = fps
         self.fig, self.ax = plt.subplots()
 
@@ -40,7 +48,6 @@ class Video(object):
         self.ax.annotate(f"Radar",(2,2),zorder=10)
 
         # Find the limits of the plot
-        #N_min, N_max, E_min, E_max = find_track_limits(track_history)
         self.ax.set_xlim(-120, 120)
         self.ax.set_ylim(-140, 20)
         self.ax.set_aspect('equal')
@@ -76,23 +83,17 @@ class Video(object):
                 # Plotting the track
                 if time_stamp in track_dict:
                     for k,track in enumerate(track_dict[time_stamp]):
-                        # print(track)
-                        # print("\n")
                         track_index = track[0]
                         if track_index in last_position_dict.keys():
                             last_position = last_position_dict[track_index][0]
                             track_color = last_position_dict[track_index][1]
                             position = track[1:3]
-                            # print(last_position)
-                            # print(position)
                             self.ax.plot([last_position[0],position[0]], [last_position[1],position[1]], color=track_color, lw=1,ls="-")
 
                             edgecolor = matplotlib.colors.colorConverter.to_rgba(track_color, alpha=0)
                             facecolor = matplotlib.colors.colorConverter.to_rgba(track_color, alpha=0.16)
                             covariance_ellipse = get_ellipse(position, track[3], gamma=self.gamma)
-                            #print(f"Track {track_index}, covariance: {track[3]}\n")
                             self.ax.add_patch(PolygonPatch(covariance_ellipse, facecolor = facecolor, edgecolor = edgecolor))
-
 
                             last_position_dict[track_index] = [track[1:3],track[-1]]
 
@@ -111,23 +112,18 @@ class Video(object):
                     current_track_ids = [track[0] for track in track_dict[timestamps[i][0]]]
                     for previous_track_id in previous_track_ids:
                         if previous_track_id not in current_track_ids:
-                            #print("track ended")
                             last_position = last_position_dict[previous_track_id][0]
                             track_color = last_position_dict[previous_track_id][1]
                             self.ax.plot(last_position[0], last_position[1], 'o', color=track_color, markersize=5)
                     
             # Saving the frame
             self.ax.set_title(f"Time: {timestamp[0]:.2f} s")
-            #self.fig.savefig(f'/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp/tracker_{i+1}.png',dpi=self.resolution)
-            # self.fig.savefig(f'/home/aflaptop/Documents/radar_tracking_results/videos/temp/tracker_{i+1}.png',dpi=self.resolution)
             temp_save_path = f'{os.path.dirname(self.wokring_directory)}/radar_tracking_result/videos/temp/tracker_{i+1}.png'
             self.fig.savefig(temp_save_path,dpi=self.resolution)
 
             bar.update(i)
    
         # Saving the video
-        #photos_file_path = "/home/aflaptop/Documents/data_mradmin/tracking_results/videos/temp"
-        # photos_file_path = "/home/aflaptop/Documents/radar_tracking_results/videos/temp"
         photos_file_path = f"{os.path.dirname(self.wokring_directory)}/radar_tracking_result/videos/temp"
         video_name = f'{photos_file_path[:-4]}{self.filename}.avi'
         images_to_video_opencv(photos_file_path, video_name, self.fps)
@@ -160,9 +156,6 @@ class Video(object):
         track_dict = {}
         track_dict["Info"] = ["Track index","x","y","covariance","color"]
         for index, trajectory in track_history.items():
-            # print(index)
-            # print(trajectory)
-            # print("\n")
             # Assigning a color to the track
             if color is not None:
                 selected_color = color
@@ -170,19 +163,12 @@ class Video(object):
                 selected_color = colors[color_idx%len(colors)] 
                 color_idx += 1
             # Adding the track to the dictionary
-            #print("\n")
             for track in trajectory:
-                #print(track)
                 if track.timestamp not in track_dict:
                     track_dict[track.timestamp] = [[index, track.posterior[0][0], track.posterior[0][2], track.posterior[1][0:3:2,0:3:2], selected_color]]
                 else:
                     track_dict[track.timestamp].append([index, track.posterior[0][0],track.posterior[0][2], track.posterior[1][0:3:2,0:3:2], selected_color])
 
-        # Saving the dictionaries
-        #np.save("/home/aflaptop/Documents/radar_tracker/data/track_dict.npy",track_dict)
-        #np.save("/home/aflaptop/Documents/radar_tracker/data/measurement_dict.npy",measurement_dict)
-        #save_track_to_mat(track_dict, "/home/aflaptop/Documents/radar_tracker/data/track_dict.mat")
-        #save_measurement_to_mat(measurement_dict, "/home/aflaptop/Documents/radar_tracker/data/measurement_dict.mat")
         return measurement_dict, track_dict
 
 

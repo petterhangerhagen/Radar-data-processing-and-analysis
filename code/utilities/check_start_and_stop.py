@@ -1,9 +1,10 @@
-
-## Author: Petter Hangerhagen ##
-## Date: 17.11.2023 ##
-
 """
-Description:
+Script Title: Check start and stop
+Author: Petter Hangerhagen
+Email: petthang@stud.ntnu.no
+Date: February 27, 2024
+Description: This script checks if a track starts and stops in a specific area. The areas are defined by rectangles.
+It also finds the average length of the tracks that starts and stops in the same area.
 """
 
 import numpy as np
@@ -204,6 +205,3 @@ def plot_rectangles():
 
 
     plt.show()
-
-# if __name__ == "__main__":
-#     plot_rectangles()

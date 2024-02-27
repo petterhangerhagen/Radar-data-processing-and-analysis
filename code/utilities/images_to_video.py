@@ -1,11 +1,14 @@
+"""
+Script Title: Images to Video
+Author: Petter Hangerhagen
+Email: petthang@stud.ntnu.no
+Date: February 27, 2024
+Description: This script contains support functions for converting images to video in the video.py file.
+"""
+
 import cv2
 import os
 import re
-
-"""
-Used in the following files:
-- video.py
-"""
 
 def tryint(s):
     try:
@@ -43,7 +46,6 @@ def images_to_video_opencv(path, output_name='video.avi', fps=1):
 
 
 def empty_folder(dir_path):
-    #dir_path = '/path/to/dir'
     for f in os.listdir(dir_path):
         os.remove(os.path.join(dir_path, f))
 

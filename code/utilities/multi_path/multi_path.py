@@ -1,3 +1,13 @@
+"""
+Script Title: Multi Path
+Author: Petter Hangerhagen
+Email: petthang@stud.ntnu.no
+Date: February 27, 2024
+Description: This script contains the classes and functions that are used to check for multi path in the radar tracking pipeline.
+It checks for MultiPathParents in the measurements, and then checks for MultiPathChildren that are inside the sector of the MultiPathParent.
+If a valid multi path is found, the MultiPath object is created, and the multi path is visulaized.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -74,7 +84,6 @@ class MultiPath:
                     multi_path.plot_child(ax)
 
         plot_next_to_multi_path.create_to_multi_path(ax2, measurements_history, track_history, timestamps_history)
-        # save_path = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_plots/for_visual_inspection"
         save_path = f"{self.wokring_directory}/code/utilities/multi_path/multi_path_plots/for_visual_inspection"
         file_name = filename.split(".")[0] + ".png"
         file_name = file_name.split("/")[-1]
@@ -94,7 +103,6 @@ class MultiPath:
                 else:
                     multi_path.plot_child(ax)
 
-        # save_path = "/home/aflaptop/Documents/radar_tracker/code/utilities/multi_path/multi_path_plots"
         save_path = f"{self.wokring_directory}/code/utilities/multi_path/multi_path_plots"
         file_name = filename.split(".")[0] + ".png"
         file_name = file_name.split("/")[-1]
@@ -108,7 +116,6 @@ class MultiPath:
 
 def check_for_multi_path(wokring_directory, filename, plot_next_to_multi_path, measurements_history, track_history, timestamps_history, plot_statement=False):
     print("Checking for multi path")
-    # measurements_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/measurement_dict.npy",allow_pickle=True).item()
     measurements_dict = np.load(f"{wokring_directory}/code/npy_files/measurement_dict.npy",allow_pickle=True).item()
  
     potential_multi_paths = []
@@ -149,6 +156,3 @@ def check_for_multi_path(wokring_directory, filename, plot_next_to_multi_path, m
         return True
     else:
         return False      
-
-# if __name__ == "__main__":
-#     check_for_multi_path()

@@ -3,6 +3,14 @@ This code is processing and analyzing a radar dataset. The dataset is recorded f
 
 Large parts of the code is adapted from the Code Ocean capsule by Audun Gullikstad Hem (2021), https://codeocean.com/capsule/3448343/tree/v1.
 
+## How to use the code:
+I am using a virtual python environment to get correct version of the requierments, without messig up for other projects. A recommondation, but not nescessary. 
+
+The required packages can be found inside `requirements.txt`. All can be installed by running:
+```pip install -r /path/to/requirements.txt ```
+
+Inside `run.py` its important to change the `radar_data_path` and the `working_directory` to make the structure you have!
+
 ## Structure
 The code is launched from `run.py`. Here, one can choose which scenarios form the dataset to be used and include different different analysis. The code inside *tracking*-folder is a pure copy from Audun Gullikstad Hem, and follows the same structure:
 
@@ -43,11 +51,7 @@ New custom defined functionality is contained in the *utilities*-folder:
 
 The *npy_files*-folder contains .npy files used for storing data temporary. 
 
-## Code setup:
-I am using a virtual python environment to get correct version of the requierments, without messig up for other projects. A recommondation, but not nescessary. 
 
-The required packages can be found inside `requirements.txt`. All can be installed by running:
-```pip install -r /path/to/requirements.txt ```
 
 
 

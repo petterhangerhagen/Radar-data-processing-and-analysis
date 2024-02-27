@@ -1,10 +1,16 @@
+"""
+Script Title: Utilities
+Author: Petter Hangerhagen
+Email: petthang@stud.ntnu.no
+Date: February 27, 2024
+Description: This script contains utility functions that are used in the radar tracking pipeline.
+"""
+
 import os
 import datetime
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-
-#from run import radar_data_path, wokring_directory
 
 def find_files(root,txt_filename):
     """
@@ -45,9 +51,9 @@ def write_filenames_to_txt(filename, txt_filename):
             f.write(os.path.basename(filename) + "\n")
    
 def make_new_directory(wokring_directory):
-    # Making new directory for the results
-    #root = f"/home/aflaptop/Documents/radar_tracking_results"
-    #root = wokring_directory.split("/")[0] + "/" + wokring_directory.split("/")[1] + "/" + wokring_directory.split("/")[2] + "/radar_tracking_results"
+    """
+    Makes a new directory for the radar tracking results, and a subdirectory for the current date, so that the results are saved in a structured way.
+    """
     root = ""
     for i in range(len(wokring_directory.split("/"))-1):
         root += wokring_directory.split("/")[i] + "/"
@@ -59,8 +65,6 @@ def make_new_directory(wokring_directory):
     else:
         print(f"Directory {root} already exists")
 
-
-    #root = f"{wokring_directory}"
     todays_date = datetime.datetime.now().strftime("%d-%b")
     path = os.path.join(root,todays_date)
     if not os.path.exists(path):
@@ -68,6 +72,9 @@ def make_new_directory(wokring_directory):
     return path
 
 def check_timegaps(timestamps):
+    """
+    Checks if the time gaps between the timestamps are consistent
+    """
     time_gaps = []
     for k in range(len(timestamps)-1):
         time_gap = timestamps[k+1]-timestamps[k]
@@ -77,9 +84,11 @@ def check_timegaps(timestamps):
     for k in range(len(time_gaps)):
         if  not (0.8*time_gap < time_gaps[k][0] < 1.2*time_gap):
             print(f"Time gap are not consistent, time gap {time_gaps[k][0]:.2f} at index {k}")
-    #print(f"Time gap between measurements = {time_gap:.2f}\n")
 
 def check_speed_of_tracks(unvalid_tracks, track_history):
+    """
+    If the average speed of a track is higher than 6 knots, the track is considered invalid.+
+    """
     track_lengths_dict = {}
     for track in track_history.items():
         first_mean, cov = track[1][0].posterior
@@ -104,12 +113,18 @@ def check_speed_of_tracks(unvalid_tracks, track_history):
     return unvalid_tracks, track_lengths_dict
 
 def check_lenght_of_tracks(unvalid_tracks, track_lengths_dict):
+    """
+    Adds tracks with a length less than 10 meters to the list of unvalid tracks
+    """
     for track_length in track_lengths_dict.items():
         if track_length[1] < 10 and track_length[0] not in unvalid_tracks:
             unvalid_tracks.append(track_length[0])
     return unvalid_tracks
 
 def check_coherence_factor(track_history,coherence_factor=0.75):
+    """
+    Checks the coherence factor of the tracks, and adds the tracks with a coherence factor less than the given value to the list of unvalid tracks
+    """
     not_valid_tracks = []
     for track in track_history.items():
         u = []
@@ -129,21 +144,25 @@ def check_coherence_factor(track_history,coherence_factor=0.75):
         for k in range(1,len(u)):
             c_k = np.dot(np.transpose(v[k]),u[k])/(np.linalg.norm(u[k])*np.linalg.norm(v[k]))
             ck += c_k[0]
-        #print(f"Coherence factor for track {track[0]} = {ck/len(u):.2f}\n")
+
         if ck/len(u) < coherence_factor:
             not_valid_tracks.append(track[0])
 
-    # print(f"Tracks with to low coherence factor: {not_valid_tracks}\n")
     return not_valid_tracks
 
 def print_current_tracks(track_history):
+    """
+    Prints the current tracks
+    """
     print(f"Number of tracks = {len(track_history)}")
     for key, value in track_history.items():
         print(f"Track {key}")
     print("\n")
 
 def histogram_of_tracks_duration(wokring_directory, track_history, reset=False):
-    # tracks_duration_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration.npy",allow_pickle=True).item()
+    """
+    Saves the duration of the tracks in a npy file, which later can be used to plot a histogram of the track duration
+    """
     npy_file = f"{wokring_directory}/code/npy_files/track_duration.npy"
     if not os.path.exists(npy_file) or reset:
         tracks_duration_dict = {}
@@ -161,19 +180,6 @@ def histogram_of_tracks_duration(wokring_directory, track_history, reset=False):
         np.save(npy_file,tracks_duration_dict)
 
     tracks_duration_dict = np.load(npy_file,allow_pickle=True).item()
-    # if reset:
-    #     tracks_duration_dict = {}
-    #     tracks_duration_dict["0-20"] = 0
-    #     tracks_duration_dict["20-40"] = 0
-    #     tracks_duration_dict["40-60"] = 0
-    #     tracks_duration_dict["60-80"] = 0
-    #     tracks_duration_dict["80-100"] = 0
-    #     tracks_duration_dict["100-120"] = 0
-    #     tracks_duration_dict["120-140"] = 0
-    #     tracks_duration_dict["140-160"] = 0
-    #     tracks_duration_dict["160-180"] = 0
-    #     tracks_duration_dict["180-200"] = 0
-    #     tracks_duration_dict[">200"] = 0
 
     track_durations = []
     for track in track_history.items():
@@ -206,12 +212,13 @@ def histogram_of_tracks_duration(wokring_directory, track_history, reset=False):
             tracks_duration_dict["180-200"] += 1
         else:
             tracks_duration_dict[">200"] += 1
-            #print(f"Track duration = {duration:.2f}")
-    # np.save("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration.npy",tracks_duration_dict)
+
     np.save(f"{wokring_directory}/code/npy_files/track_duration.npy",tracks_duration_dict)
 
 def plot_histogram_of_tracks_duration(wokring_directory):
-    # tracks_duration_dict = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/track_duration_finished.npy",allow_pickle=True).item()
+    """
+    Plots a histogram of the track duration
+    """
     tracks_duration_dict = np.load(f"{wokring_directory}/code/npy_files/track_duration.npy",allow_pickle=True).item()
     fig, ax = plt.subplots(figsize=(12, 5))
 
@@ -221,12 +228,10 @@ def plot_histogram_of_tracks_duration(wokring_directory):
     ax.bar(tracks_duration_dict.keys(), tracks_duration_dict.values(), color=colors)
     ax.set_xlabel('Duration of tracks [s]',fontsize=15)
     ax.set_ylabel('Number of tracks',fontsize=15)
-    #ax.set_title('Histogram of tracks duration')
     plt.tick_params(axis='both', which='major', labelsize=12)
-    # plt.savefig("/home/aflaptop/Documents/radar_tracking_results/histogram_track_duration.png",dpi=400)
     plt.savefig(f"{os.path.dirname(wokring_directory)}/radar_tracking_results/histogram_track_duration.png",dpi=400)
+    print(f"Saved histogram of track duration to {os.path.dirname(wokring_directory)}/radar_tracking_results/histogram_track_duration.png")
     plt.close()
-    #plt.show()
 
 def read_out_txt_file(root):
     """

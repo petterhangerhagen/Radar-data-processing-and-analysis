@@ -1,3 +1,16 @@
+"""
+Script Title: Merged measurements
+Author: Petter Hangerhagen
+Email: petthang@stud.ntnu.no
+Date: February 27, 2024
+Description: This script finds and visualizes the merged measurements. 
+The script reads out the measurement dictionary and finds all measurements which are close to each other at the same timestamp. 
+The following need to be satisfied for the measurements to be approved 'before' they are merged:
+- The measurements are less than 20 meters apart
+- The areas of the measurements are larger than 50
+- The measurements are inside the polygon area
+"""
+
 import scipy.io as io
 import numpy as np
 from tracking import constructs
@@ -295,8 +308,3 @@ def point_inside_polygon(measurement, vertices):
                         inside = not inside
         p1x, p1y = p2x, p2y
     return inside
-
-
-# if __name__ == "__main__":
-#     merged_measurements()
-    
