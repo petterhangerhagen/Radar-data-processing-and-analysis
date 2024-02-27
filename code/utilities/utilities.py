@@ -4,6 +4,8 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 
+#from run import radar_data_path, wokring_directory
+
 def find_files(root,txt_filename):
     """
     Finds the files in the root directory that are given in the txt file
@@ -43,9 +45,17 @@ def write_filenames_to_txt(filename, txt_filename):
             f.write(os.path.basename(filename) + "\n")
    
 
-def make_new_directory():
+def make_new_directory(wokring_directory):
     # Making new directory for the results
-    root = "/home/aflaptop/Documents/radar_tracking_results"
+    #root = f"/home/aflaptop/Documents/radar_tracking_results"
+    #root = wokring_directory.split("/")[0] + "/" + wokring_directory.split("/")[1] + "/" + wokring_directory.split("/")[2] + "/radar_tracking_results"
+    root = ""
+    for i in range(len(wokring_directory.split("/"))-1):
+        root += wokring_directory.split("/")[i] + "/"
+    root += "radar_tracking_result"
+
+
+    #root = f"{wokring_directory}"
     todays_date = datetime.datetime.now().strftime("%d-%b")
     path = os.path.join(root,todays_date)
     if not os.path.exists(path):

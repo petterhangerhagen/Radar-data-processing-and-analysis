@@ -12,6 +12,8 @@ import datetime
 from parameters import tracker_params, measurement_params, process_params, tracker_state
 from matplotlib.colors import LinearSegmentedColormap
 
+from run import radar_data_path, wokring_directory
+
 # define font size, and size of plots
 matplotlib.rcParams['font.size'] = 30
 matplotlib.rcParams['figure.figsize'] = 7.16666, 7.166666
@@ -86,7 +88,7 @@ class ScenarioPlot(object):
         self.fig, self.ax1 = plt.subplots(figsize=(11, 7.166666))
         
         # Plotting the occupancy grid'
-        data = np.load(f"/home/aflaptop/Documents/radar_tracker/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
+        data = np.load(f"{wokring_directory}/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
         occupancy_grid = data["occupancy_grid"]
         origin_x = data["origin_x"]
         origin_y = data["origin_y"]
@@ -357,7 +359,7 @@ def find_track_limits(track_history, extra_spacing=50):
 
 def plot_only_map(rectangles):
     # Plotting the occupancy grid'
-    data = np.load(f"/home/aflaptop/Documents/radar_tracker/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
+    data = np.load(f"{wokring_directory}/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
     occupancy_grid = data["occupancy_grid"]
     origin_x = data["origin_x"]
     origin_y = data["origin_y"]
@@ -409,7 +411,7 @@ def plot_only_map(rectangles):
         ax.add_patch(PolygonPatch(rectangle, edgecolor = "#ff7f0e", facecolor = '#ff7f0e', alpha=0.3, linewidth=3.5))
         ax.annotate(name, ((x[0] + x[2])/2 - 2, (y[0] + y[2])/2 - 2), fontsize=25, color='black')
 
-    save_name = "/home/aflaptop/Documents/radar_tracking_results/map/only_map.png"
+    save_name = f"{wokring_directory}/radar_tracking_results/map/only_map.png"
     fig.savefig(save_name,dpi=400)
     print(f"Saving figure to {save_name}")
     plt.close()

@@ -79,7 +79,7 @@ if __name__ == '__main__':
     there.
     """
     # make new directory with the current date to save results
-    dir_name = util.make_new_directory()
+    dir_name = util.make_new_directory(wokring_directory)
 
     # turn off tracker functionality
     IMM_off = tracker_state["IMM_off"]
@@ -107,8 +107,7 @@ if __name__ == '__main__':
 
     ### Import data ###
         
-    import_selection = 5
-
+    import_selection = 1
     ###################
 
 
@@ -266,10 +265,10 @@ if __name__ == '__main__':
 
                 #print(f"Number of multi-target scenarios: {number_of_multiple_target_scenarios}\n")
 
-            if i==0:
-                util.histogram_of_tracks_duration(manager.track_history,reset=True)
-            else:
-                util.histogram_of_tracks_duration(manager.track_history,reset=False)
+            # if i==0:
+            #     util.histogram_of_tracks_duration(manager.track_history,reset=True)
+            # else:
+            #     util.histogram_of_tracks_duration(manager.track_history,reset=False)
             
             if check_for_multi_path_scenarios:
                 merged_measurement.create_dict(filename, manager.track_history)
