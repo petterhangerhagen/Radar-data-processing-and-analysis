@@ -9,7 +9,7 @@ I am using a virtual python environment to get correct version of the requiermen
 The required packages can be found inside `requirements.txt`. All can be installed by running:
 ```pip install -r /path/to/requirements.txt ```
 
-Inside `run.py` its important to change the `radar_data_path` and the `working_directory` to make the structure you have!
+Inside `run.py` its important to change the `radar_data_path` and the `working_directory` to match the structure you have!
 
 ## Structure
 The code is launched from `run.py`. Here, one can choose which scenarios form the dataset to be used and include different different analysis. The code inside *tracking*-folder is a pure copy from Audun Gullikstad Hem, and follows the same structure:
