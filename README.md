@@ -1,5 +1,5 @@
 # Processing and analysis of radar dataset
-This code is processing and analyzing a radar dataset. The dataset is recorded from the Trondheim City Canal during the summer of 2023. The dataset can be obtain from ..., and showed have the following file path ...
+This code is processing and analyzing a radar dataset. The dataset is recorded from the Trondheim City Canal during the summer of 2023. The dataset can be obtain from (https://doi.org/10.5281/zenodo.10706216). 
 
 Large parts of the code is adapted from the Code Ocean capsule by Audun Gullikstad Hem (2021), https://codeocean.com/capsule/3448343/tree/v1.
 
