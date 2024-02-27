@@ -5,6 +5,7 @@ import numpy as np
 import os
 import glob
 import datetime
+import warnings
 
 import utilities.merged_measurements.merged_measurement as merged_measurement
 from utilities.multi_target.multi_target_scenarios import multi_target_scenarios, move_plot_to_this_directory
@@ -15,10 +16,13 @@ import utilities.utilities as util
 
 from parameters import tracker_params, measurement_params, process_params, tracker_state
 from tracking import constructs, utilities, filters, models, initiators, terminators, managers, associators, trackers
+warnings.filterwarnings("ignore", message="Conversion of an array with ndim > 0 to a scalar is deprecated")
 
 
 radar_data_path = "/home/petter/radar_data"
 wokring_directory = "/home/petter/Radar-data-processing-and-analysis"
+# radar_data_path = "/home/aflaptop/Documents/radar_data"
+# wokring_directory = "/home/aflaptop/Documents/radar_tracker"
 
 def setup_manager():
     if IMM_off:
