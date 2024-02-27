@@ -53,6 +53,12 @@ def make_new_directory(wokring_directory):
         root += wokring_directory.split("/")[i] + "/"
     root += "radar_tracking_results"
 
+    if not os.path.exists(root):
+        os.mkdir(root)
+        print(f"Directory {root} created")
+    else:
+        print(f"Directory {root} already exists")
+
 
     #root = f"{wokring_directory}"
     todays_date = datetime.datetime.now().strftime("%d-%b")
