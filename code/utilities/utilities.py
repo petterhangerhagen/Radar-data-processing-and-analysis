@@ -51,7 +51,7 @@ def make_new_directory(wokring_directory):
     root = ""
     for i in range(len(wokring_directory.split("/"))-1):
         root += wokring_directory.split("/")[i] + "/"
-    root += "radar_tracking_result"
+    root += "radar_tracking_results"
 
 
     #root = f"{wokring_directory}"
@@ -202,7 +202,7 @@ def plot_histogram_of_tracks_duration(wokring_directory):
     #ax.set_title('Histogram of tracks duration')
     plt.tick_params(axis='both', which='major', labelsize=12)
     # plt.savefig("/home/aflaptop/Documents/radar_tracking_results/histogram_track_duration.png",dpi=400)
-    plt.savefig(f"{os.path.dirname(wokring_directory)}/radar_tracking_result/histogram_track_duration.png",dpi=400)
+    plt.savefig(f"{os.path.dirname(wokring_directory)}/radar_tracking_results/histogram_track_duration.png",dpi=400)
     plt.close()
     #plt.show()
 
