@@ -153,13 +153,13 @@ if __name__ == '__main__':
     ## Specific data
     elif import_selection == 1:
         root = f"{radar_data_path}/data_aug_15-18"
-        root = f"{radar_data_path}/data_aug_18-19"
-        root = f"{radar_data_path}/data_aug_22-23"
-        root = f"{radar_data_path}/data_aug_25-26-27"
-        root = f"{radar_data_path}/data_aug_28-29-30-31"
-        root = f"{radar_data_path}/data_sep_1-2-3-4-5-6-7"
-        root = f"{radar_data_path}/data_sep_8-9-11-14"
-        root = f"{radar_data_path}/data_sep_17-18-19-24"
+        # root = f"{radar_data_path}/data_aug_18-19"
+        # root = f"{radar_data_path}/data_aug_22-23"
+        # root = f"{radar_data_path}/data_aug_25-26-27"
+        # root = f"{radar_data_path}/data_aug_28-29-30-31"
+        # root = f"{radar_data_path}/data_sep_1-2-3-4-5-6-7"
+        # root = f"{radar_data_path}/data_sep_8-9-11-14"
+        # root = f"{radar_data_path}/data_sep_17-18-19-24"
         path_list = glob.glob(os.path.join(root, '*.json'))
     
 
@@ -187,11 +187,15 @@ if __name__ == '__main__':
     # Single scenario
     elif import_selection == 5:
         root = radar_data_path
-        path_list = [f"{root}/data_sep_17-18-19-24/rosbag_2023-09-17-12-12-38.json"]
+        # path_list = [f"{root}/data_sep_17-18-19-24/rosbag_2023-09-17-12-12-38.json"]
+        path_list = [f"{root}/data_aug_18-19/rosbag_2023-08-18-16-28-18.json"]
     
     # Empty list
     else: 
         path_list = []
+
+    # Plot only map
+    util.plot_only_map(wokring_directory)
 
     # Counting the number of different scenarios
     number_of_multiple_target_scenarios = 0
@@ -200,7 +204,7 @@ if __name__ == '__main__':
     for i,filename in enumerate(path_list):
         # If statement is used if not all of the imported data should be used
         # for example if only the first 10 files should be used, if i<10
-        if True:
+        if False:
             print(f'File number {i+1} of {len(path_list)}')
             print(f"Curent file: {os.path.basename(filename)}\n")
 
@@ -330,6 +334,10 @@ if __name__ == '__main__':
                 else:
                     util.histogram_of_tracks_duration(wokring_directory, manager.track_history, reset=False)
                 
+                
+            # for track in manager.track_history.items():
+            #     util.check_if_track_is_stationary(track)
+
     # Plot histogram of tracks duration
     if count_and_plot_histogram_of_tracks_duration:
         util.plot_histogram_of_tracks_duration(wokring_directory)
