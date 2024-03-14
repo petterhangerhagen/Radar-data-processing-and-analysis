@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 import warnings
+import json
 
 from matplotlib.cm import get_cmap
 from shapely.geometry.point import Point
@@ -21,6 +22,7 @@ from descartes import PolygonPatch
 import datetime
 from parameters import tracker_params, measurement_params, process_params, tracker_state
 from matplotlib.colors import LinearSegmentedColormap
+import matplotlib.patches as mpatches
 
 # define font size, and size of plots
 matplotlib.rcParams['font.size'] = 30
@@ -45,7 +47,7 @@ class ScenarioPlot(object):
         #self.ax1 = self.ax
         
 
-    def create(self, measurements, track_history, ownship, timestamps, ground_truth=None):
+    def create(self, measurements, track_history, invalid_track_history, timestamps, ground_truth=None):
         self.fig, self.ax1 = plt.subplots(figsize=(11, 7.166666))
         #self.write_track_time_to_plot(track_history)
         #self.write_coherence_factor_to_plot(track_history)
@@ -69,6 +71,8 @@ class ScenarioPlot(object):
             add_covariance_ellipses=self.add_covariance_ellipses,
             add_validation_gates=self.add_validation_gates,
             gamma=self.gamma)
+        
+        plot_stationary_objects(invalid_track_history, self.ax1)
 
         #N_min, N_max, E_min, E_max = find_track_limits(track_history)
         self.ax1.set_xlim(-120, 120)
@@ -92,10 +96,12 @@ class ScenarioPlot(object):
         self.fig.savefig(save_name,dpi=self.resolution)
         print(f"Saving tracker_{save_name}")
         plt.close()
+        return self.ax1
+        # plt.close()
 
-    def create_with_map(self, measurements, track_history, ownship, timestamps, ground_truth=None):
+    def create_with_map(self, measurements, track_history, invalid_track_history, timestamps, ground_truth=None):
         self.fig, self.ax1 = plt.subplots(figsize=(11, 7.166666))
-        
+
         # Plotting the occupancy grid'
         data = np.load(f"{self.wokring_directory}/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
         occupancy_grid = data["occupancy_grid"]
@@ -106,28 +112,47 @@ class ScenarioPlot(object):
         cm = LinearSegmentedColormap.from_list('custom_gray', colors, N=256)
         self.ax1.imshow(occupancy_grid, cmap=cm, interpolation='none', origin='upper', extent=[0, occupancy_grid.shape[1], 0, occupancy_grid.shape[0]])
         
+        display_true_land = True
+        if display_true_land:
+            # Load and display the second occupancy grid
+            data2 = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/occupancy_grid_without_dilating.npy", allow_pickle=True).item()
+            occupancy_grid2 = data2["occupancy_grid"]
+            
+            # Second imshow with alpha for overlap effect
+            self.ax1.imshow(occupancy_grid2, cmap="binary", interpolation='none', origin='upper', 
+                    extent=[0, occupancy_grid2.shape[1], 0, occupancy_grid2.shape[0]], alpha=0.2)
 
         # self.write_track_time_to_plot(track_history)
         # self.write_coherence_factor_to_plot(track_history)
 
         # Radar pos
-        x_radar = origin_x
-        y_radar = origin_y
-        self.ax1.plot(x_radar,y_radar,c="red", marker="o", zorder=10, markersize=10)
-        self.ax1.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10,fontsize=15)
+        self.ax1.plot(origin_x,origin_y,c="red", marker="o", zorder=10, markersize=10)
+        self.ax1.annotate(f"Radar",(origin_x + 2,origin_y + 2),zorder=10,fontsize=15)
 
-        plot_measurements(self.filename,measurements, self.ax1, timestamps, marker_size=self.measurement_marker_size)
+        plot_measurements(self.filename,measurements, self.ax1, timestamps, marker_size=self.measurement_marker_size, origin_x=origin_x, origin_y=origin_y)
         
         if ground_truth:
             plot_track_pos(ground_truth, self.ax1, color='k', marker_size=self.track_marker_size)
 
-        plot_track_pos(
+        
+        image_patches = plot_track_pos(
             track_history,
             self.ax1,
             add_index=self.add_track_indexes,
             add_covariance_ellipses=self.add_covariance_ellipses,
             add_validation_gates=self.add_validation_gates,
-            gamma=self.gamma)
+            gamma=self.gamma,
+            origin_x=origin_x,
+            origin_y=origin_y)
+        
+        # plots stationary targets
+        image_patch = plot_stationary_objects(invalid_track_history, self.ax1, origin_x=origin_x, origin_y=origin_y)
+
+        plot_legend = True
+        if plot_legend:
+            if image_patch is not None:
+                image_patches.append(image_patch)
+            self.ax1.legend(handles=image_patches, loc='upper left', fontsize=12)
 
         #N_min, N_max, E_min, E_max = find_track_limits(track_history)
         self.ax1.set_xlim(origin_x-120,origin_x + 120)
@@ -138,12 +163,11 @@ class ScenarioPlot(object):
         plt.tick_params(axis='both', which='major', labelsize=15)
         plt.tight_layout()
 
-        for key in track_history.keys():
-            x_start = track_history[key][0].posterior[0][0]
-            y_start = track_history[key][0].posterior[0][2]
+        for k, key in enumerate(track_history.keys()):
+            x_start = track_history[key][0].posterior[0][0] + origin_x
+            y_start = track_history[key][0].posterior[0][2] + origin_y
             self.ax1.plot(x_start,y_start,c="red", marker="o",zorder=10,markersize=5)
-            self.ax1.annotate(f"Start Track {key}",(x_start,y_start),zorder=10)
-
+            self.ax1.annotate(f"Start Track {k+1}",(x_start,y_start),zorder=10)
         # reformating the x and y axis
         x_axis_list = np.arange(origin_x-120,origin_x+121,20)
         x_axis_list_str = []
@@ -266,7 +290,7 @@ class ScenarioPlot(object):
 
 
 
-def plot_measurements(filename,measurements_all, ax, timestamps, marker_size=5):
+def plot_measurements(filename,measurements_all, ax, timestamps, marker_size=5, origin_x=0, origin_y=0):
     cmap = get_cmap('Greys')
     measurements_all = dict((i, set(measurements)) for i, measurements in enumerate(measurements_all))
 
@@ -278,17 +302,20 @@ def plot_measurements(filename,measurements_all, ax, timestamps, marker_size=5):
         except Exception as e:
             print(f"Error {e} with file: {filename}")
         for measurement in measurement_set:
-            ax.plot(measurement.value[0], measurement.value[1], marker='o', color=color, markersize=marker_size)
+            ax.plot(measurement.value[0] + origin_x, measurement.value[1] + origin_y, marker='o', color=color, markersize=marker_size)
 
-def plot_track_pos(track_history, ax, add_index=False, add_covariance_ellipses=False, add_validation_gates=False, gamma=3.5, lw=1, ls='-', marker_size = 5, color=None,):
+def plot_track_pos(track_history, ax, add_index=False, add_covariance_ellipses=False, add_validation_gates=False, gamma=3.5, lw=1, ls='-', marker_size = 5, color=None, origin_x=0, origin_y=0):
     color_idx = 0
-    colors = ['#ff7f0e', '#1f77b4', '#2ca02c','#c73838','#c738c0',"#33A8FF",'#DBFF33','#33FFBD','#FFBD33',] # Orange, blå, grønn, rød, rosa,blå, gul/grønn, turkis, gul
-    #colors = ['#ff7f0e', '#1f77b4', '#2ca02c']
-    for index, trajectory in track_history.items():
+    colors = ['#ff7f0e','#1f77b4', '#2ca02c','#c73838','#c738c0',"#33A8FF",'#33FFBD']  # Orange, blå, grønn, rød, rosa, lyse blå, turkis
+    image_patches = []
+
+    for k, (index, trajectory) in enumerate(track_history.items()):
         if len(trajectory) == 0:
             continue
 
         positions = np.array([track.posterior[0] for track in trajectory])
+        positions[:,0] += origin_x
+        positions[:,2] += origin_y
 
         if color is not None:
             selected_color = color
@@ -299,12 +326,17 @@ def plot_track_pos(track_history, ax, add_index=False, add_covariance_ellipses=F
         line, = ax.plot(positions[:,0], positions[:,2], color=selected_color, lw=lw,ls=ls)
         last_position, = ax.plot(positions[-1,0], positions[-1,2], 'o', color=selected_color, markersize=marker_size)
 
+        image_patch = mpatches.Patch(color=selected_color, label=f'Track {k+1}')
+        image_patches.append(image_patch)
+
         if add_covariance_ellipses:
             edgecolor = matplotlib.colors.colorConverter.to_rgba(selected_color, alpha=0)
             facecolor = matplotlib.colors.colorConverter.to_rgba(selected_color, alpha=0.16)
             #print(trajectory)
             for track in trajectory:
-                covariance_ellipse = get_ellipse(track.posterior[0][0:3:2], track.posterior[1][0:3:2,0:3:2])
+                center = track.posterior[0][0:3:2]
+                center = [center[0] + origin_x, center[1] + origin_y]
+                covariance_ellipse = get_ellipse(center, track.posterior[1][0:3:2,0:3:2])
                 ax.add_patch(PolygonPatch(covariance_ellipse, facecolor = facecolor, edgecolor = edgecolor))
 
         if add_validation_gates:
@@ -316,6 +348,8 @@ def plot_track_pos(track_history, ax, add_index=False, add_covariance_ellipses=F
 
         if add_index:
             ax.text(positions[-1,0], positions[-1,2]-5, str(index), color='black')
+
+    return image_patches
 
 def get_validation_gate(state, gamma):
         for j, predicted_measurement in enumerate(state.predicted_measurements.leaves):
@@ -366,7 +400,42 @@ def find_track_limits(track_history, extra_spacing=50):
     E_max += extra_spacing
     return N_min, N_max, E_min, E_max
 
-def plot_only_map(wokring_directory, rectangles):
+def plot_stationary_objects(invalid_track_history, ax, origin_x=0, origin_y=0):
+    not_stationary_objects = []
+    stationary_objects = []
+    vertices = [(100, 0), (100, -40), (0, -80), (-50,-110), (-90, -120), (-105, -110),(-50,-60),(-25,-20),(0,0)]
+    vertices = [(x + origin_x, y + origin_y) for x, y in vertices]
+    # temp_polygon = Polygon(vertices)
+    # ax.add_patch(PolygonPatch(temp_polygon, edgecolor = "black", facecolor = 'black', alpha=0.3, linewidth=3.5))
+    for track_id, trajectory in invalid_track_history.items():
+        start_position = trajectory[0].posterior[0]
+        start_position = [start_position[0] + origin_x, start_position[2] + origin_y]
+        circle = Point(start_position[0], start_position[1]).buffer(20)
+        for track_point in trajectory:
+            mean = track_point.posterior[0]
+            if not circle.contains(Point(mean[0], mean[2])):
+                not_stationary_objects.append(track_id)
+                break
+        stationary_objects.append((track_id,start_position,circle))
+
+
+    for _track_id,_start_position,_circle in stationary_objects:
+        ### Want to check if the stationary object is outside the polygon
+        if Point(_start_position[0], _start_position[1]).within(Polygon(vertices)):
+            continue
+        circle = Point(_start_position[0], _start_position[1]).buffer(5)
+        poly = PolygonPatch(circle, edgecolor = "#FFBD33", facecolor = '#FFBD33', alpha=0.3, linewidth=3.5)
+        ax.add_patch(poly)
+        poly.set_zorder(10)
+
+    if len(stationary_objects) > 0:
+        image_patch = mpatches.Patch(color='#FFBD33', label='Stationary targets', alpha=0.3)
+    else:
+        image_patch = None
+    return image_patch
+        
+
+def plot_only_map_with_rectangles(wokring_directory, rectangles):
     # Plotting the occupancy grid'
     data = np.load(f"{wokring_directory}/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
     occupancy_grid = data["occupancy_grid"]
@@ -379,10 +448,27 @@ def plot_only_map(wokring_directory, rectangles):
     ax.imshow(occupancy_grid, cmap=cm, interpolation='none', origin='upper', extent=[0, occupancy_grid.shape[1], 0, occupancy_grid.shape[0]])
     
     # Radar pos
-    x_radar = origin_x
-    y_radar = origin_y
-    ax.plot(x_radar,y_radar,c="red", marker="o", zorder=10, markersize=10)
-    ax.annotate(f"Radar",(x_radar + 2,y_radar + 2),zorder=10,fontsize=15)
+    ax.plot(origin_x,origin_y,c="red", marker="o", zorder=10, markersize=10)
+    ax.annotate(f"Radar",(origin_x + 2,origin_y + 2),zorder=10,fontsize=15)
+
+    display_true_land = True
+    if display_true_land:
+        # Load and display the second occupancy grid
+        data2 = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/occupancy_grid_without_dilating.npy", allow_pickle=True).item()
+        occupancy_grid2 = data2["occupancy_grid"]
+        
+        # Second imshow with alpha for overlap effect
+        ax.imshow(occupancy_grid2, cmap="binary", interpolation='none', origin='upper', 
+                extent=[0, occupancy_grid2.shape[1], 0, occupancy_grid2.shape[0]], alpha=0.2)
+        
+        # Create custom patches for legend
+        first_image_patch = mpatches.Patch(color='gray', label='True land')
+        second_image_patch = mpatches.Patch(color='black', alpha=0.2, label='Land after dilation')
+        
+
+        # Add legend
+        ax.legend(handles=[first_image_patch, second_image_patch], loc='upper left', fontsize=12)
+        
 
     #N_min, N_max, E_min, E_max = find_track_limits(track_history)
     ax.set_xlim(origin_x-120,origin_x + 120)
@@ -420,7 +506,7 @@ def plot_only_map(wokring_directory, rectangles):
         ax.add_patch(PolygonPatch(rectangle, edgecolor = "#ff7f0e", facecolor = '#ff7f0e', alpha=0.3, linewidth=3.5))
         ax.annotate(name, ((x[0] + x[2])/2 - 2, (y[0] + y[2])/2 - 2), fontsize=25, color='black')
 
-    save_name = f"{wokring_directory}/code/utilities/how_areas_are_defined_on_map.jpg"
+    save_name = f"{wokring_directory}/code/utilities/how_areas_are_defined_on_map.png"
     fig.savefig(save_name,dpi=400)
     print(f"Saving figure to {save_name}")
     plt.close()

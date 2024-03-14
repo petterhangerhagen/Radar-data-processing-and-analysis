@@ -33,10 +33,10 @@ warnings.filterwarnings("ignore", message="Conversion of an array with ndim > 0 
 """
 IMPORTANT: Need to change the radar_data_path and wokring_directory to the correct paths!!
 """
-radar_data_path = "/home/petter/radar_data"
-wokring_directory = "/home/petter/Radar-data-processing-and-analysis"
-# radar_data_path = "/home/aflaptop/Documents/radar_data"
-# wokring_directory = "/home/aflaptop/Documents/radar_tracker"
+# radar_data_path = "/home/petter/radar_data"
+# wokring_directory = "/home/petter/Radar-data-processing-and-analysis"
+radar_data_path = "/home/aflaptop/Documents/radar_data"
+wokring_directory = "/home/aflaptop/Documents/radar_tracker"
 
 # setup the tracker based on the parameters in parameters.py
 def setup_manager():
@@ -116,13 +116,13 @@ if __name__ == '__main__':
     """
     # 1: True, 0: False
     plot_statement = 1
-    relative_to_map = 0
+    relative_to_map = 1
     video_statement = 0
     filter_out_unvalid_tracks = 1
     check_for_multi_target_scenarios = 0
-    check_for_merged_measurements = 0
-    check_for_multi_path_scenarios = 0
-    count_and_plot_histogram_of_tracks_duration = 0
+    # check_for_merged_measurements = 0
+    # check_for_multi_path_scenarios = 0
+    count_and_plot_histogram_of_tracks_duration = 1
     counting_matrix = 0
     reset_count_matrix = 0
     
@@ -141,7 +141,7 @@ if __name__ == '__main__':
     5: Single scenario, hardcode the path to the scenario you want to import.
     """
     ### Import data ###
-    import_selection = 5
+    import_selection = 1
     ###################
 
 
@@ -153,13 +153,13 @@ if __name__ == '__main__':
     ## Specific data
     elif import_selection == 1:
         root = f"{radar_data_path}/data_aug_15-18"
-        root = f"{radar_data_path}/data_aug_18-19"
-        root = f"{radar_data_path}/data_aug_22-23"
-        root = f"{radar_data_path}/data_aug_25-26-27"
-        root = f"{radar_data_path}/data_aug_28-29-30-31"
-        root = f"{radar_data_path}/data_sep_1-2-3-4-5-6-7"
-        root = f"{radar_data_path}/data_sep_8-9-11-14"
-        root = f"{radar_data_path}/data_sep_17-18-19-24"
+        # root = f"{radar_data_path}/data_aug_18-19"
+        # root = f"{radar_data_path}/data_aug_22-23"
+        # root = f"{radar_data_path}/data_aug_25-26-27"
+        # root = f"{radar_data_path}/data_aug_28-29-30-31"
+        # root = f"{radar_data_path}/data_sep_1-2-3-4-5-6-7"
+        # root = f"{radar_data_path}/data_sep_8-9-11-14"
+        # root = f"{radar_data_path}/data_sep_17-18-19-24"
         path_list = glob.glob(os.path.join(root, '*.json'))
     
 
@@ -187,25 +187,28 @@ if __name__ == '__main__':
     # Single scenario
     elif import_selection == 5:
         root = radar_data_path
-        path_list = [f"{root}/data_sep_17-18-19-24/rosbag_2023-09-17-12-12-38.json"]
-    
+        path_list = [f"{radar_data_path}/data_aug_18-19/rosbag_2023-08-19-11-21-26.json",
+                     f"{radar_data_path}/data_aug_18-19/rosbag_2023-08-18-14-57-38.json"]
+
     # Empty list
     else: 
         path_list = []
+    
+    plot_rectangle_map = False
+    if plot_rectangle_map:
+        util.plot_map_with_rectangles(wokring_directory)
 
     # Counting the number of different scenarios
-    number_of_multiple_target_scenarios = 0
-    number_of_merged_measurements_scenarios = 0
-    number_of_multi_path_scenarios = 0
+    number_of_multi_target_scenarios = 0
     for i,filename in enumerate(path_list):
         # If statement is used if not all of the imported data should be used
         # for example if only the first 10 files should be used, if i<10
-        if True:
+        if i<2:
             print(f'File number {i+1} of {len(path_list)}')
             print(f"Curent file: {os.path.basename(filename)}\n")
 
             # read out data
-            measurements, ownship, timestamps = import_radar_data.radar_data_json_file(wokring_directory, filename, relative_to_map=relative_to_map)
+            measurements, ownship, timestamps = import_radar_data.radar_data_json_file(filename)
 
             # Check i there are any measurements in the file
             if len(measurements) == 0:
@@ -226,36 +229,38 @@ if __name__ == '__main__':
 
             
             # Calculate coherence factor 
-            unvalid_tracks = util.check_coherence_factor(manager.track_history,coherence_factor=0.75)
+            invalid_tracks = util.check_coherence_factor(manager.track_history,coherence_factor=0.75)
+
+            # unvalid_tracks = util.check_startionary_tracks(unvalid_tracks, manager.track_history)
 
             # Check speed of tracks
-            unvalid_tracks, track_lengths_dict = util.check_speed_of_tracks(unvalid_tracks, manager.track_history)
+            invalid_tracks = util.check_invalid_tracks(invalid_tracks, manager.track_history)
 
             # check for to short tracks
-            unvalid_tracks = util.check_lenght_of_tracks(unvalid_tracks, track_lengths_dict)
+            # unvalid_tracks = util.check_lenght_of_tracks(unvalid_tracks, track_lengths_dict)
                     
             # Print current tracks
             #util.print_current_tracks(manager.track_history)
 
+
+            if i == 0:
+                util.count_filtered_out_invalid_tracks(wokring_directory,invalid_tracks, reset = True)
+            else:
+                util.count_filtered_out_invalid_tracks(wokring_directory,invalid_tracks)
+
+
             # Remove unvalid tracks
+            invalid_track_history = {}
             if filter_out_unvalid_tracks:
-                for track in unvalid_tracks:
+                for track in invalid_tracks:
+                    invalid_track_history[track] = manager.track_history[track]
                     del manager.track_history[track]
             
                 # Print current tracks
                 #print("After removing unvalid tracks:")
                 #util.print_current_tracks(manager.track_history)
 
-            # Check for merged measurements
-            # Can not be used with relative_to_map and without filter_out_unvalid_tracks
-            if check_for_merged_measurements and filter_out_unvalid_tracks and not relative_to_map:
-                measurement_dict, track_dict = merged_measurement.create_dict(wokring_directory, filename, manager.track_history)
-
-                if merged_measurement.merged_measurements(wokring_directory, filename, manager.track_history, plot_scenarios=True, return_true_or_false=True):
-                    number_of_merged_measurements_scenarios += 1
-                    #txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt"
-                    txt_filename = f"{wokring_directory}/code/utilities/merged_measurements/merged_measurements.txt"
-                    util.write_filenames_to_txt(filename, txt_filename)
+            
 
 
             # Plot of the scenario
@@ -263,20 +268,13 @@ if __name__ == '__main__':
                 # Check if the scenario should be plotted relative to the map
                 if relative_to_map:
                     plot = plotting.ScenarioPlot(wokring_directory, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
-                    plot.create_with_map(measurements, manager.track_history, ownship, timestamps)
+                    plot.create_with_map(measurements, manager.track_history, invalid_track_history, timestamps)
                 else:
                     plot = plotting.ScenarioPlot(wokring_directory, measurement_marker_size=3, track_marker_size=5, add_covariance_ellipses=True, add_validation_gates=False, add_track_indexes=False, gamma=3.5, filename=filename, dir_name=dir_name, resolution=400)
-                    plot.create(measurements, manager.track_history, ownship, timestamps)
+                    ax = plot.create(measurements, manager.track_history, invalid_track_history, timestamps)
 
-                # Below is code for only plotting the map with the defined areas
-                # rectangleA = RectangleA()
-                # rectangleB = RectangleB()
-                # rectangleC = RectangleC()
-                # rectangleD = RectangleD()
-                # rectangleE = RectangleE()
-                # rectangleF = RectangleF()
-                # rectangles = [rectangleA,rectangleB,rectangleC,rectangleD,rectangleE,rectangleF] 
-                # plotting.plot_only_map(wokring_directory, rectangles)
+
+                
                 
             # Create video
             if video_statement and not relative_to_map:
@@ -291,54 +289,81 @@ if __name__ == '__main__':
             if counting_matrix:
                 count_matrix.check_start_and_stop(track_history=manager.track_history,filename=filename)
 
+            # Check for merged measurements
+            # Can not be used with relative_to_map and without filter_out_unvalid_tracks
+            # if check_for_merged_measurements and filter_out_unvalid_tracks and not relative_to_map:
+            #     measurement_dict, track_dict = merged_measurement.create_dict(wokring_directory, filename, manager.track_history)
+
+
+            #     if merged_measurement.merged_measurements(wokring_directory, filename, manager.track_history, ax, plot_scenarios=True, return_true_or_false=True):
+            #         number_of_merged_measurements_scenarios += 1
+            #         #txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt"
+            #         txt_filename = f"{wokring_directory}/code/utilities/merged_measurements/merged_measurements.txt"
+            #         util.write_filenames_to_txt(filename, txt_filename)
+            #         # plotting.plot_merged_measurements(filename, wokring_directory)
 
             # Check for multi-target scenarios
             # Can not be used with relative_to_map and without filter_out_unvalid_tracks
             if check_for_multi_target_scenarios and filter_out_unvalid_tracks and not relative_to_map:
                 if multi_target_scenarios(manager.track_history):
-                    number_of_multiple_target_scenarios += 1
+                    number_of_multi_target_scenarios += 1
                     txt_filename = f"{wokring_directory}/code/utilities/multi_target/multi_target_scenarios.txt"
                     util.write_filenames_to_txt(filename, txt_filename)
                     
                     # Move plot to the multi_target directory
-                    if plot_statement:
+                    if False:
                         move_plot_to_this_directory(wokring_directory, filename, dir_name)
                 
                         
 
             # Check for multi-path scenarios
             # Can not be used with relative_to_map and without filter_out_unvalid_tracks
-            if check_for_multi_path_scenarios and filter_out_unvalid_tracks and not relative_to_map:
-                merged_measurement.create_dict(wokring_directory, filename, manager.track_history)
+            # if check_for_multi_path_scenarios and filter_out_unvalid_tracks and not relative_to_map:
+            #     merged_measurement.create_dict(wokring_directory, filename, manager.track_history)
 
-                # Need to pass the plot information the the function in the next step, if plot_statement is not true. 
-                if not plot_statement:
-                    plot = None
+            #     # Need to pass the plot information the the function in the next step, if plot_statement is not true. 
+            #     if not plot_statement:
+            #         plot = None
 
-                if check_for_multi_path(wokring_directory, filename, plot, measurements, manager.track_history, timestamps, plot_statement):
-                    number_of_multi_path_scenarios += 1
-                    print("Multi path scenario found")
-                    txt_filename = f"{wokring_directory}/code/utilities/multi_path/multi_path_scenarios.txt"
-                    util.write_filenames_to_txt(filename, txt_filename)
+            #     if check_for_multi_path(wokring_directory, filename, plot, measurements, manager.track_history, timestamps, plot_statement):
+            #         number_of_multi_path_scenarios += 1
+            #         print("Multi path scenario found")
+            #         txt_filename = f"{wokring_directory}/code/utilities/multi_path/multi_path_scenarios.txt"
+            #         util.write_filenames_to_txt(filename, txt_filename)
             
 
 
             # Count the duration of the tracks
             if count_and_plot_histogram_of_tracks_duration:
+                npy_file_1 = f"{wokring_directory}/code/npy_files/track_duration_1.npy"
+                npy_file_2 = f"{wokring_directory}/code/npy_files/track_duration_2.npy"
+                combined_dict = {}
+                for key in manager.track_history:
+                    combined_dict[key] = manager.track_history[key]
+                for key in invalid_track_history:
+                    combined_dict[key] = invalid_track_history[key]
+                # print(combined_dict)
                 if i==0:
-                    util.histogram_of_tracks_duration(wokring_directory, manager.track_history, reset=True)
+                    util.histogram_of_tracks_duration(npy_file_1, manager.track_history, reset=True)
+                    util.histogram_of_tracks_duration(npy_file_2, combined_dict, reset=True)
                 else:
-                    util.histogram_of_tracks_duration(wokring_directory, manager.track_history, reset=False)
+                    util.histogram_of_tracks_duration(npy_file_1, manager.track_history, reset=False)
+                    util.histogram_of_tracks_duration(npy_file_2, combined_dict, reset=False)
                 
     # Plot histogram of tracks duration
     if count_and_plot_histogram_of_tracks_duration:
-        util.plot_histogram_of_tracks_duration(wokring_directory)
+        npy_file_1 = f"{wokring_directory}/code/npy_files/track_duration_1.npy"
+        npy_file_2 = f"{wokring_directory}/code/npy_files/track_duration_2.npy"
+        util.plot_histogram_of_tracks_duration(npy_file_1,wokring_directory,num=1)
+        util.plot_histogram_of_tracks_duration(npy_file_2,wokring_directory,num=2)
+
+
     if check_for_multi_target_scenarios:
-        print(f"Number of multi-target scenarios: {number_of_multiple_target_scenarios}\n")
-    if check_for_merged_measurements:
-        print(f"Number of merged measurement scenarios: {number_of_merged_measurements_scenarios}\n")
-    if check_for_multi_path_scenarios:
-        print(f"Number of multi-path scenarios: {number_of_multi_path_scenarios}\n")
+        print(f"Number of multi-target scenarios: {number_of_multi_target_scenarios}\n")
+    # if check_for_merged_measurements:
+    #     print(f"Number of merged measurement scenarios: {number_of_merged_measurements_scenarios}\n")
+    # if check_for_multi_path_scenarios:
+    #     print(f"Number of multi-path scenarios: {number_of_multi_path_scenarios}\n")
 
 
     if counting_matrix:

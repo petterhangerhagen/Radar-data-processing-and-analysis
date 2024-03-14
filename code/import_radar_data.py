@@ -14,12 +14,7 @@ from parameters import measurement_params
 import json
 
 
-def radar_data_json_file(wokring_directory, json_file, relative_to_map = False):
-
-    if relative_to_map:
-        data = np.load(f"{wokring_directory}/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
-        origin_x = data["origin_y"]
-        origin_y = data["origin_x"]
+def radar_data_json_file(json_file):
 
     measurements = []
     timestamps = []
@@ -44,12 +39,8 @@ def radar_data_json_file(wokring_directory, json_file, relative_to_map = False):
         item_data = item["scan"]
         measurements.append(set())
         for i,measurement in enumerate(item_data):
-            if relative_to_map:
-                y = measurement["cluster_centroid"]["x"] + origin_x
-                x = measurement["cluster_centroid"]["y"] + origin_y
-            else:
-                y = measurement["cluster_centroid"]["x"]
-                x = measurement["cluster_centroid"]["y"]
+            y = measurement["cluster_centroid"]["x"]
+            x = measurement["cluster_centroid"]["y"]
             meas_set = (np.array([x,y]))
             measurements[-1].add(constructs.Measurement(meas_set, measurement_params['cart_cov'],  float(timestamp)))
         timestamps.append(float(timestamp))

@@ -11,6 +11,9 @@ import datetime
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
+from shapely.geometry.point import Point
+from utilities.check_start_and_stop import RectangleA, RectangleB, RectangleC, RectangleD, RectangleE, RectangleF
+import plotting
 
 def find_files(root,txt_filename):
     """
@@ -85,41 +88,112 @@ def check_timegaps(timestamps):
         if  not (0.8*time_gap < time_gaps[k][0] < 1.2*time_gap):
             print(f"Time gap are not consistent, time gap {time_gaps[k][0]:.2f} at index {k}")
 
-def check_speed_of_tracks(unvalid_tracks, track_history):
+def check_invalid_tracks(unvalid_tracks, track_history):
     """
     If the average speed of a track is higher than 6 knots, the track is considered invalid.+
     """
-    track_lengths_dict = {}
-    for track in track_history.items():
-        first_mean, cov = track[1][0].posterior
-        last_mean, cov = track[1][-1].posterior
-        first_point = (first_mean[0],first_mean[2])
-        last_point = (last_mean[0],last_mean[2])
-        track_length = np.sqrt((first_point[0]-last_point[0])**2 + (first_point[1]-last_point[1])**2)
-        #print(f"lenght of track {track[0]} = {track_length:.2f}") 
-        track_lengths_dict[track[0]] = track_length
+    # track_lengths_dict = {}
+    # for track in track_history.items():
+    #     first_mean, cov = track[1][0].posterior
+    #     last_mean, cov = track[1][-1].posterior
+    #     first_point = (first_mean[0],first_mean[2])
+    #     last_point = (last_mean[0],last_mean[2])
+    #     track_length = np.sqrt((first_point[0]-last_point[0])**2 + (first_point[1]-last_point[1])**2)
+    #     #print(f"lenght of track {track[0]} = {track_length:.2f}") 
+    #     track_lengths_dict[track[0]] = track_length
 
     for track in track_history.items():
+        if track[0] in unvalid_tracks:
+            continue
+        if len(track[1]) <= 20:
+            unvalid_tracks.append(track[0])
+
+    max_totale_speed = 5
+
+    track_lengths_dict = {}
+    for track in track_history.items():
+        if track[0] in unvalid_tracks:
+            continue
         track_id = track[0]
         track_start_time = track[1][0].timestamp
         track_end_time = track[1][-1].timestamp
         track_time = track_end_time - track_start_time
+
+        track_lengths = []
+        first_mean, cov = track[1][0].posterior
+        x_last = first_mean[0]
+        y_last = first_mean[2]
+        for k, track_point in enumerate(track[1]):
+            mean, cov = track_point.posterior
+            x = mean[0]
+            y = mean[2]
+            distance = np.sqrt((x-x_last)**2 + (y-y_last)**2)
+            track_lengths.append(distance)
+            x_last = x
+            y_last = y
+        track_lengths_dict[track_id] = sum(track_lengths)
+
+
         track_speed = track_lengths_dict[track_id]/track_time
-        track_speed_knots = 1.94384449*track_speed
         # print(f"Speed of track {track_id} = {track_speed_knots:.2f} knots")
-        if track_speed_knots > 6 and track_id not in unvalid_tracks:
+        if track_speed > max_totale_speed:
             unvalid_tracks.append(track_id)
 
-    return unvalid_tracks, track_lengths_dict
 
-def check_lenght_of_tracks(unvalid_tracks, track_lengths_dict):
-    """
-    Adds tracks with a length less than 10 meters to the list of unvalid tracks
-    """
-    for track_length in track_lengths_dict.items():
-        if track_length[1] < 10 and track_length[0] not in unvalid_tracks:
-            unvalid_tracks.append(track_length[0])
+
+
+    speed_of_tracks = {}
+    max_speed = 10
+    for track in track_history.items():
+        if track[0] in unvalid_tracks:
+            continue
+        speed_of_tracks[track[0]] = []
+        last_timestamp = track[1][0].timestamp
+        last_mean, cov = track[1][0].posterior
+        last_x = last_mean[0]
+        last_y = last_mean[2]
+        number_of_times_over_max_speed = 0
+
+        for k, track_point in enumerate(track[1]):
+            
+            if k == 0:  
+                continue
+            timestamp = track_point.timestamp
+            time_gap = timestamp - last_timestamp
+            mean, cov = track_point.posterior
+            x = mean[0]
+            y = mean[2]
+            distance = np.sqrt((x-last_x)**2 + (y-last_y)**2)
+            speed = distance/time_gap
+            speed_of_tracks[track[0]].append(speed)
+            if speed > max_speed and track[0] not in unvalid_tracks:
+                number_of_times_over_max_speed += 1
+                # unvalid_tracks.append(track[0])
+            if number_of_times_over_max_speed > 1:
+                unvalid_tracks.append(track[0])
+                break
+            last_x = x
+            last_y = y
+            last_timestamp = timestamp
+
+    tracks_dict = {}
+    for track in track_history.items():
+        if track[0] in unvalid_tracks:
+            continue
+        tracks_dict[track[0]] = []
+        for track_point in track[1]:
+            mean, cov = track_point.posterior
+            tracks_dict[track[0]].append([int(mean[0]),int(mean[2])])
+
+    # for track_id,track_points in tracks_dict.items():
+    #     print(f"Track {track_id}")
+    #     print(f"Number of points = {len(track_points)}")
+    #     print(f"Points = {track_points}")
+    #     print("\n")
+
     return unvalid_tracks
+
+
 
 def check_coherence_factor(track_history,coherence_factor=0.75):
     """
@@ -159,24 +233,61 @@ def print_current_tracks(track_history):
         print(f"Track {key}")
     print("\n")
 
-def histogram_of_tracks_duration(wokring_directory, track_history, reset=False):
+def count_filtered_out_invalid_tracks(working_directory,unvalid_tracks, reset=False):
+    """
+    Counts the number of unvalid tracks
+    """
+    filename = f"{working_directory}/code/npy_files/filtered_out_unvalid_tracks.npy"
+    if not os.path.exists(filename) or reset:
+        number_of_unvalid_tracks = len(unvalid_tracks)
+        np.save(filename,number_of_unvalid_tracks)
+    else:
+        number_of_unvalid_tracks = np.load(filename,allow_pickle=True)
+        number_of_unvalid_tracks += len(unvalid_tracks)
+        np.save(filename,number_of_unvalid_tracks)
+    
+def check_if_track_is_stationary(track):
+    # print("Checking if track is stationary")
+    # print(track[0])
+    # print(track[1])
+    stationary = True
+    # print(type(track))
+
+    if len(track[1]) < 2:
+        return True
+
+    first_mean, cov = track[1][0].posterior
+    circle = Point(first_mean[0], first_mean[2]).buffer(30)
+    for track_point in track[1]:        
+        mean, cov = track_point.posterior
+        x = mean[0]
+        y = mean[2]
+        if not circle.contains(Point(x, y)):
+            stationary = False
+            break
+    
+    return stationary
+    
+
+
+
+def histogram_of_tracks_duration(npy_file, track_history, reset=False):
     """
     Saves the duration of the tracks in a npy file, which later can be used to plot a histogram of the track duration
     """
-    npy_file = f"{wokring_directory}/code/npy_files/track_duration.npy"
     if not os.path.exists(npy_file) or reset:
         tracks_duration_dict = {}
-        tracks_duration_dict["0-20"] = 0
-        tracks_duration_dict["20-40"] = 0
-        tracks_duration_dict["40-60"] = 0
-        tracks_duration_dict["60-80"] = 0
-        tracks_duration_dict["80-100"] = 0
-        tracks_duration_dict["100-120"] = 0
-        tracks_duration_dict["120-140"] = 0
-        tracks_duration_dict["140-160"] = 0
-        tracks_duration_dict["160-180"] = 0
-        tracks_duration_dict["180-200"] = 0
-        tracks_duration_dict[">200"] = 0
+        tracks_duration_dict["0-20"] = [0,0]
+        tracks_duration_dict["20-40"] = [0,0]
+        tracks_duration_dict["40-60"] = [0,0]
+        tracks_duration_dict["60-80"] = [0,0]
+        tracks_duration_dict["80-100"] = [0,0]
+        tracks_duration_dict["100-120"] = [0,0]
+        tracks_duration_dict["120-140"] = [0,0]
+        tracks_duration_dict["140-160"] = [0,0]
+        tracks_duration_dict["160-180"] = [0,0]
+        tracks_duration_dict["180-200"] = [0,0]
+        tracks_duration_dict[">200"] = [0,0]
         np.save(npy_file,tracks_duration_dict)
 
     tracks_duration_dict = np.load(npy_file,allow_pickle=True).item()
@@ -186,83 +297,138 @@ def histogram_of_tracks_duration(wokring_directory, track_history, reset=False):
         track_start_time = track[1][0].timestamp
         track_end_time = track[1][-1].timestamp
         track_time = track_end_time - track_start_time
-        track_durations.append(track_time)
-
-    
-    for duration in track_durations:
-        if duration < 20:
-            tracks_duration_dict["0-20"] += 1
-        elif 20 <= duration < 40:
-            tracks_duration_dict["20-40"] += 1
-        elif 40 <= duration < 60:
-            tracks_duration_dict["40-60"] += 1
-        elif 60 <= duration < 80:
-            tracks_duration_dict["60-80"] += 1
-        elif 80 <= duration < 100:
-            tracks_duration_dict["80-100"] += 1
-        elif 100 <= duration < 120:
-            tracks_duration_dict["100-120"] += 1
-        elif 120 <= duration < 140:
-            tracks_duration_dict["120-140"] += 1
-        elif 140 <= duration < 160:
-            tracks_duration_dict["140-160"] += 1
-        elif 160 <= duration < 180:
-            tracks_duration_dict["160-180"] += 1
-        elif 180 <= duration < 200:
-            tracks_duration_dict["180-200"] += 1
+        if check_if_track_is_stationary(track):
+            track_durations.append([track_time,1])
         else:
-            tracks_duration_dict[">200"] += 1
+            track_durations.append([track_time,0])
 
-    np.save(f"{wokring_directory}/code/npy_files/track_duration.npy",tracks_duration_dict)
+    for duration,stationary in track_durations:
+        if duration < 20:
+            if stationary:
+                tracks_duration_dict["0-20"][1] += 1
+            else:
+                tracks_duration_dict["0-20"][0] += 1
 
-def plot_histogram_of_tracks_duration(wokring_directory):
+        elif 20 <= duration < 40:
+            if stationary:
+                tracks_duration_dict["20-40"][1] += 1
+            else:
+                tracks_duration_dict["20-40"][0] += 1
+        elif 40 <= duration < 60:
+            if stationary:
+                tracks_duration_dict["40-60"][1] += 1
+            else:
+                tracks_duration_dict["40-60"][0] += 1
+        elif 60 <= duration < 80:
+            if stationary:
+                tracks_duration_dict["60-80"][1] += 1
+            else:
+                tracks_duration_dict["60-80"][0] += 1
+        elif 80 <= duration < 100:
+            if stationary:
+                tracks_duration_dict["80-100"][1] += 1
+            else:
+                tracks_duration_dict["80-100"][0] += 1
+        elif 100 <= duration < 120:
+            if stationary:
+                tracks_duration_dict["100-120"][1] += 1
+            else:
+                tracks_duration_dict["100-120"][0] += 1
+        elif 120 <= duration < 140:
+            if stationary:
+                tracks_duration_dict["120-140"][1] += 1
+            else:
+                tracks_duration_dict["120-140"][0] += 1
+        elif 140 <= duration < 160:
+            if stationary:
+                tracks_duration_dict["140-160"][1] += 1
+            else:
+                tracks_duration_dict["140-160"][0] += 1
+        elif 160 <= duration < 180:
+            if stationary:
+                tracks_duration_dict["160-180"][1] += 1
+            else:
+                tracks_duration_dict["160-180"][0] += 1
+        elif 180 <= duration < 200:
+            if stationary:
+                tracks_duration_dict["180-200"][1] += 1
+            else:
+                tracks_duration_dict["180-200"][0] += 1
+        else:
+            if stationary:
+                tracks_duration_dict[">200"][1] += 1
+            else:
+                tracks_duration_dict[">200"][0] += 1
+
+    np.save(npy_file,tracks_duration_dict)
+    #rint(tracks_duration_dict)
+
+def plot_histogram_of_tracks_duration(npy_file, wokring_directory,num):
     """
     Plots a histogram of the track duration
     """
-    tracks_duration_dict = np.load(f"{wokring_directory}/code/npy_files/track_duration.npy",allow_pickle=True).item()
+    # tracks_duration_dict = np.load(f"{wokring_directory}/code/npy_files/track_duration.npy",allow_pickle=True).item()
+    tracks_duration_dict = np.load(npy_file,allow_pickle=True).item()
+
     fig, ax = plt.subplots(figsize=(12, 5))
 
     # Get a list of colors for each bar
-    colors = plt.cm.viridis(np.linspace(0, 1, len(tracks_duration_dict)))
+    #colors = plt.cm.viridis(np.linspace(0, 1, len(tracks_duration_dict)))
 
-    ax.bar(tracks_duration_dict.keys(), tracks_duration_dict.values(), color=colors)
+    data1 = [value[0] for value in tracks_duration_dict.values()]
+    data2 = [value[1] for value in tracks_duration_dict.values()]
+    ax.bar(tracks_duration_dict.keys(), data1, color='#1f77b4', label='Moving tracks')
+    ax.bar(tracks_duration_dict.keys(), data2, color='#2ca02c',bottom=data1, label='Stationary tracks')
     ax.set_xlabel('Duration of tracks [s]',fontsize=15)
     ax.set_ylabel('Number of tracks',fontsize=15)
+    ax.legend(fontsize=15)
     plt.tick_params(axis='both', which='major', labelsize=12)
-    plt.savefig(f"{os.path.dirname(wokring_directory)}/radar_tracking_results/histogram_track_duration.png",dpi=400)
+    plt.savefig(f"{os.path.dirname(wokring_directory)}/radar_tracking_results/histogram_track_duration_{num}.png",dpi=400)
     print(f"Saved histogram of track duration to {os.path.dirname(wokring_directory)}/radar_tracking_results/histogram_track_duration.png")
     plt.close()
 
-def read_out_txt_file(root):
-    """
-    Reads out the txt file with the timestamps of the files that should be skipped, related to remove_files
-    """
-    txt_file = glob.glob(os.path.join(root, '*.txt'))
-    timestamps = []
-    with open(txt_file[0], 'r') as f:
-        lines = f.readlines()
-        for line in lines:
-            timestamps.append(line.split()[0])
-    return timestamps        
+def plot_map_with_rectangles(wokring_directory):
+    # Below is code for only plotting the map with the defined areas
+    rectangleA = RectangleA()
+    rectangleB = RectangleB()
+    rectangleC = RectangleC()
+    rectangleD = RectangleD()
+    rectangleE = RectangleE()
+    rectangleF = RectangleF()
+    rectangles = [rectangleA,rectangleB,rectangleC,rectangleD,rectangleE,rectangleF] 
+    plotting.plot_only_map_with_rectangles(wokring_directory, rectangles)
 
-def remove_files(root,path_list,counter):
-    """
-    Removes files from the path_list that are given in the txt file, related to read_out_txt_file
-    """
-    files_to_be_skipped = read_out_txt_file(root)
-    counter_local = 0
-    path_list_copy = path_list.copy()
-    for file in path_list_copy:
-        date_of_file = file.split('/')[-1].split('.')[0].split('_')[-1]
-        for timestamp in files_to_be_skipped:
-            if date_of_file == timestamp:
-                try:
-                    path_list.remove(file)
-                    counter += 1
-                    counter_local += 1
-                except:
-                    print(f"File {file} not in list")
-                    pass
+
+# def read_out_txt_file(root):
+#     """
+#     Reads out the txt file with the timestamps of the files that should be skipped, related to remove_files
+#     """
+#     txt_file = glob.glob(os.path.join(root, '*.txt'))
+#     timestamps = []
+#     with open(txt_file[0], 'r') as f:
+#         lines = f.readlines()
+#         for line in lines:
+#             timestamps.append(line.split()[0])
+#     return timestamps        
+
+# def remove_files(root,path_list,counter):
+#     """
+#     Removes files from the path_list that are given in the txt file, related to read_out_txt_file
+#     """
+#     files_to_be_skipped = read_out_txt_file(root)
+#     counter_local = 0
+#     path_list_copy = path_list.copy()
+#     for file in path_list_copy:
+#         date_of_file = file.split('/')[-1].split('.')[0].split('_')[-1]
+#         for timestamp in files_to_be_skipped:
+#             if date_of_file == timestamp:
+#                 try:
+#                     path_list.remove(file)
+#                     counter += 1
+#                     counter_local += 1
+#                 except:
+#                     print(f"File {file} not in list")
+#                     pass
                 
-    print(f"Removed {counter_local} files of {len(files_to_be_skipped)} files given by the txt file")
-    return counter
+#     print(f"Removed {counter_local} files of {len(files_to_be_skipped)} files given by the txt file")
+#     return counter

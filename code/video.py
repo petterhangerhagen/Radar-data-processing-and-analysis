@@ -118,13 +118,13 @@ class Video(object):
                     
             # Saving the frame
             self.ax.set_title(f"Time: {timestamp[0]:.2f} s")
-            temp_save_path = f'{os.path.dirname(self.wokring_directory)}/radar_tracking_result/videos/temp/tracker_{i+1}.png'
+            temp_save_path = f'{os.path.dirname(self.wokring_directory)}/radar_tracking_results/videos/temp/tracker_{i+1}.png'
             self.fig.savefig(temp_save_path,dpi=self.resolution)
 
             bar.update(i)
    
         # Saving the video
-        photos_file_path = f"{os.path.dirname(self.wokring_directory)}/radar_tracking_result/videos/temp"
+        photos_file_path = f"{os.path.dirname(self.wokring_directory)}/radar_tracking_results/videos/temp"
         video_name = f'{photos_file_path[:-4]}{self.filename}.avi'
         images_to_video_opencv(photos_file_path, video_name, self.fps)
         print(f"\nSaving the video to {video_name}")

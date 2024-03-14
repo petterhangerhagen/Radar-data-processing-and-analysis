@@ -1,12 +1,14 @@
 *.npy
 /radar_tracker_virtual_env/
 /code/__pycache__/
-/code/utilities/__pycache__/
-/code/tracking/__pycache__/
+code/utilities/__pycache__/
+code/tracking/__pycache__/
+code/utilities/old_files
+code/utilities/merged_measurements
 code/utilities/merged_measurements/__pycache__
+code/utilities/multi_path
 code/utilities/multi_path/__pycache__
 code/utilities/multi_target/__pycache__
 *.pyc
 *.png
 *.html
-/code/test.py

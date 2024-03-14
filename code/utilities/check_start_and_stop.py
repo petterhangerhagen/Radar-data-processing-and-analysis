@@ -27,7 +27,7 @@ class RectangleA:
             return False
 
 class RectangleB:
-    def __init__(self, bottom_left=[-38,-32], top_right=[-4,0]):
+    def __init__(self, bottom_left=[-38,-32], top_right=[-4,18]):
         self.bottom_left = bottom_left
         self.top_right = top_right
         self.index = 1
@@ -72,7 +72,7 @@ class RectangleD:
             return False
 
 class RectangleE:
-    def __init__(self, bottom_left=[-60,-70], top_right=[-35,-35]):
+    def __init__(self, bottom_left=[-78,-78], top_right=[-40,-30]):
         self.bottom_left = bottom_left
         self.top_right = top_right
         self.index = 4
@@ -87,7 +87,7 @@ class RectangleE:
             return False
 
 class RectangleF:
-    def __init__(self, bottom_left=[-2,-25], top_right=[38,0]):
+    def __init__(self, bottom_left=[-2,-25], top_right=[38,10]):
         self.bottom_left = bottom_left
         self.top_right = top_right
         self.index = 5
