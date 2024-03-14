@@ -43,6 +43,11 @@ New custom defined functionality is contained in the *utilities*-folder:
 
 The *npy_files*-folder contains .npy files used for storing data temporary. 
 
+## Additional code
+Code for finding scenarios including merged measurement can be found at https://github.com/petterhangerhagen/check_radar_data_for_merged_measurements.git
+
+Code for finding scenarios including mulitpath can be found at https://github.com/petterhangerhagen/check_radar_data_for_multipath.git
+
 
 
 
