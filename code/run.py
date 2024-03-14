@@ -17,7 +17,7 @@ import os
 import glob
 import warnings
 
-from utilities.multi_target.multi_target import multi_target_scenarios
+from utilities.multi_target.multi_target import multi_target_scenarios, move_plot_to_this_directory
 from utilities.check_start_and_stop import CountMatrix
 import utilities.utilities as util
 
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     relative_to_map = 1
     video_statement = 0
     filter_out_unvalid_tracks = 1
-    check_for_multi_target_scenarios = 0
+    check_for_multi_target_scenarios = 1
     count_and_plot_histogram_of_tracks_duration = 0
     counting_matrix = 0
     reset_count_matrix = 0
@@ -265,6 +265,8 @@ if __name__ == '__main__':
                     number_of_multi_target_scenarios += 1
                     txt_filename = f"{wokring_directory}/code/utilities/multi_target/multi_target_scenarios.txt"
                     util.write_filenames_to_txt(filename, txt_filename)
+                if plot_statement:
+                    move_plot_to_this_directory(wokring_directory, filename, dir_name)
                     
             # Count the duration of the tracks
             if count_and_plot_histogram_of_tracks_duration:

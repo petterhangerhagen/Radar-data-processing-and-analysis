@@ -61,8 +61,6 @@ def move_plot_to_this_directory(wokring_directory, filename, dirname):
     for file in matching_files:
         shutil.copy(os.path.join(source_dir, file), destaination_dir)
 
-
-
 def create_dict(track_history):
         track_dict = {}
         track_dict["Info"] = ["Track index","x","y","covariance"]
