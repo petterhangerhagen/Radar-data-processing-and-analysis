@@ -247,15 +247,9 @@ def count_filtered_out_invalid_tracks(working_directory,unvalid_tracks, reset=Fa
         np.save(filename,number_of_unvalid_tracks)
     
 def check_if_track_is_stationary(track):
-    # print("Checking if track is stationary")
-    # print(track[0])
-    # print(track[1])
     stationary = True
-    # print(type(track))
-
     if len(track[1]) < 2:
         return True
-
     first_mean, cov = track[1][0].posterior
     circle = Point(first_mean[0], first_mean[2]).buffer(30)
     for track_point in track[1]:        
@@ -267,9 +261,6 @@ def check_if_track_is_stationary(track):
             break
     
     return stationary
-    
-
-
 
 def histogram_of_tracks_duration(npy_file, track_history, reset=False):
     """
@@ -303,28 +294,12 @@ def histogram_of_tracks_duration(npy_file, track_history, reset=False):
             track_durations.append([track_time,0])
 
     for duration,stationary in track_durations:
-        if check_if_track_is_stationary(track):
-            track_durations.append([track_time,1])
-        else:
-            track_durations.append([track_time,0])
-
-    for duration,stationary in track_durations:
         if duration < 20:
             if stationary:
                 tracks_duration_dict["0-20"][1] += 1
             else:
                 tracks_duration_dict["0-20"][0] += 1
-
-            if stationary:
-                tracks_duration_dict["0-20"][1] += 1
-            else:
-                tracks_duration_dict["0-20"][0] += 1
-
         elif 20 <= duration < 40:
-            if stationary:
-                tracks_duration_dict["20-40"][1] += 1
-            else:
-                tracks_duration_dict["20-40"][0] += 1
             if stationary:
                 tracks_duration_dict["20-40"][1] += 1
             else:
@@ -334,15 +309,7 @@ def histogram_of_tracks_duration(npy_file, track_history, reset=False):
                 tracks_duration_dict["40-60"][1] += 1
             else:
                 tracks_duration_dict["40-60"][0] += 1
-            if stationary:
-                tracks_duration_dict["40-60"][1] += 1
-            else:
-                tracks_duration_dict["40-60"][0] += 1
         elif 60 <= duration < 80:
-            if stationary:
-                tracks_duration_dict["60-80"][1] += 1
-            else:
-                tracks_duration_dict["60-80"][0] += 1
             if stationary:
                 tracks_duration_dict["60-80"][1] += 1
             else:
@@ -352,15 +319,7 @@ def histogram_of_tracks_duration(npy_file, track_history, reset=False):
                 tracks_duration_dict["80-100"][1] += 1
             else:
                 tracks_duration_dict["80-100"][0] += 1
-            if stationary:
-                tracks_duration_dict["80-100"][1] += 1
-            else:
-                tracks_duration_dict["80-100"][0] += 1
         elif 100 <= duration < 120:
-            if stationary:
-                tracks_duration_dict["100-120"][1] += 1
-            else:
-                tracks_duration_dict["100-120"][0] += 1
             if stationary:
                 tracks_duration_dict["100-120"][1] += 1
             else:
@@ -370,15 +329,7 @@ def histogram_of_tracks_duration(npy_file, track_history, reset=False):
                 tracks_duration_dict["120-140"][1] += 1
             else:
                 tracks_duration_dict["120-140"][0] += 1
-            if stationary:
-                tracks_duration_dict["120-140"][1] += 1
-            else:
-                tracks_duration_dict["120-140"][0] += 1
         elif 140 <= duration < 160:
-            if stationary:
-                tracks_duration_dict["140-160"][1] += 1
-            else:
-                tracks_duration_dict["140-160"][0] += 1
             if stationary:
                 tracks_duration_dict["140-160"][1] += 1
             else:
@@ -388,15 +339,7 @@ def histogram_of_tracks_duration(npy_file, track_history, reset=False):
                 tracks_duration_dict["160-180"][1] += 1
             else:
                 tracks_duration_dict["160-180"][0] += 1
-            if stationary:
-                tracks_duration_dict["160-180"][1] += 1
-            else:
-                tracks_duration_dict["160-180"][0] += 1
         elif 180 <= duration < 200:
-            if stationary:
-                tracks_duration_dict["180-200"][1] += 1
-            else:
-                tracks_duration_dict["180-200"][0] += 1
             if stationary:
                 tracks_duration_dict["180-200"][1] += 1
             else:
@@ -406,30 +349,16 @@ def histogram_of_tracks_duration(npy_file, track_history, reset=False):
                 tracks_duration_dict[">200"][1] += 1
             else:
                 tracks_duration_dict[">200"][0] += 1
-            if stationary:
-                tracks_duration_dict[">200"][1] += 1
-            else:
-                tracks_duration_dict[">200"][0] += 1
 
     np.save(npy_file,tracks_duration_dict)
-    #rint(tracks_duration_dict)
 
 def plot_histogram_of_tracks_duration(npy_file, wokring_directory,num):
     """
     Plots a histogram of the track duration
     """
-    # tracks_duration_dict = np.load(f"{wokring_directory}/code/npy_files/track_duration.npy",allow_pickle=True).item()
     tracks_duration_dict = np.load(npy_file,allow_pickle=True).item()
 
     fig, ax = plt.subplots(figsize=(12, 5))
-
-    # Get a list of colors for each bar
-    #colors = plt.cm.viridis(np.linspace(0, 1, len(tracks_duration_dict)))
-
-    data1 = [value[0] for value in tracks_duration_dict.values()]
-    data2 = [value[1] for value in tracks_duration_dict.values()]
-    ax.bar(tracks_duration_dict.keys(), data1, color='#1f77b4', label='Moving tracks')
-    ax.bar(tracks_duration_dict.keys(), data2, color='#2ca02c',bottom=data1, label='Stationary tracks')
     data1 = [value[0] for value in tracks_duration_dict.values()]
     data2 = [value[1] for value in tracks_duration_dict.values()]
     ax.bar(tracks_duration_dict.keys(), data1, color='#1f77b4', label='Moving tracks')
@@ -453,37 +382,3 @@ def plot_map_with_rectangles(wokring_directory):
     rectangles = [rectangleA,rectangleB,rectangleC,rectangleD,rectangleE,rectangleF] 
     plotting.plot_only_map_with_rectangles(wokring_directory, rectangles)
 
-
-# def read_out_txt_file(root):
-#     """
-#     Reads out the txt file with the timestamps of the files that should be skipped, related to remove_files
-#     """
-#     txt_file = glob.glob(os.path.join(root, '*.txt'))
-#     timestamps = []
-#     with open(txt_file[0], 'r') as f:
-#         lines = f.readlines()
-#         for line in lines:
-#             timestamps.append(line.split()[0])
-#     return timestamps        
-
-# def remove_files(root,path_list,counter):
-#     """
-#     Removes files from the path_list that are given in the txt file, related to read_out_txt_file
-#     """
-#     files_to_be_skipped = read_out_txt_file(root)
-#     counter_local = 0
-#     path_list_copy = path_list.copy()
-#     for file in path_list_copy:
-#         date_of_file = file.split('/')[-1].split('.')[0].split('_')[-1]
-#         for timestamp in files_to_be_skipped:
-#             if date_of_file == timestamp:
-#                 try:
-#                     path_list.remove(file)
-#                     counter += 1
-#                     counter_local += 1
-#                 except:
-#                     print(f"File {file} not in list")
-#                     pass
-                
-#     print(f"Removed {counter_local} files of {len(files_to_be_skipped)} files given by the txt file")
-#     return counter

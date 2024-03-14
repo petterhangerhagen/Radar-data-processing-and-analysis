@@ -18,9 +18,9 @@ import glob
 import datetime
 import warnings
 
-import utilities.merged_measurements.merged_measurement as merged_measurement
+# import utilities.merged_measurements.merged_measurement as merged_measurement
 from utilities.multi_target.multi_target import multi_target_scenarios, move_plot_to_this_directory
-from utilities.multi_path.multi_path import check_for_multi_path
+# from utilities.multi_path.multi_path import check_for_multi_path
 from utilities.check_start_and_stop import CountMatrix
 from utilities.check_start_and_stop import RectangleA, RectangleB, RectangleC, RectangleD, RectangleE, RectangleF
 import utilities.utilities as util
@@ -115,14 +115,14 @@ if __name__ == '__main__':
     reset_count_matrix: If True, the code will reset the counting matrix. This is useful if you want to start from scratch.
     """
     # 1: True, 0: False
-    plot_statement = 1
-    relative_to_map = 1
+    plot_statement = 0
+    relative_to_map = 0
     video_statement = 0
     filter_out_unvalid_tracks = 1
     check_for_multi_target_scenarios = 0
     # check_for_merged_measurements = 0
     # check_for_multi_path_scenarios = 0
-    count_and_plot_histogram_of_tracks_duration = 1
+    count_and_plot_histogram_of_tracks_duration = 0
     counting_matrix = 0
     reset_count_matrix = 0
     
@@ -140,65 +140,55 @@ if __name__ == '__main__':
     4: Multi path scenarios, this will import the data from the multi_path_scenarios.txt file.
     5: Single scenario, hardcode the path to the scenario you want to import.
     """
+  
+
+    def scenario_selector(import_selection):
+        ## All data
+        if import_selection == 0:
+            root = radar_data_path
+            path_list = glob.glob(os.path.join(root,'**' ,'*.json'))
+
+        ## Specific data
+        elif import_selection == 1:
+            root = f"{radar_data_path}/data_aug_15-18"
+            # root = f"{radar_data_path}/data_aug_18-19"
+            # root = f"{radar_data_path}/data_aug_22-23"
+            # root = f"{radar_data_path}/data_aug_25-26-27"
+            # root = f"{radar_data_path}/data_aug_28-29-30-31"
+            # root = f"{radar_data_path}/data_sep_1-2-3-4-5-6-7"
+            # root = f"{radar_data_path}/data_sep_8-9-11-14"
+            # root = f"{radar_data_path}/data_sep_17-18-19-24"
+            path_list = glob.glob(os.path.join(root, '*.json'))
+        
+
+        # Multi target scenarios
+        elif import_selection == 2:
+            root = radar_data_path
+            txt_filename = f"{wokring_directory}/code/utilities/multi_target/multi_target_scenarios.txt"
+            path_list = util.find_files(root,txt_filename)
+
+        # Single scenario
+        elif import_selection == 3:
+            root = radar_data_path
+            # Both multi-target scenarios in the paper
+            path_list = [f"{root}/data_aug_18-19/rosbag_2023-08-19-17-42-41.json",
+                         f"{root}/data_aug_18-19/rosbag_2023-08-19-11-21-26.json",]
+        
+        # Empty list
+        else: 
+            path_list = []
+        return path_list
+    
     ### Import data ###
-    import_selection = 1
+    import_selection = 3
+    path_list = scenario_selector(import_selection)
     ###################
-
-
-    ## All data
-    if import_selection == 0:
-        root = radar_data_path
-        path_list = glob.glob(os.path.join(root,'**' ,'*.json'))
-
-    ## Specific data
-    elif import_selection == 1:
-        root = f"{radar_data_path}/data_aug_15-18"
-        # root = f"{radar_data_path}/data_aug_18-19"
-        # root = f"{radar_data_path}/data_aug_22-23"
-        # root = f"{radar_data_path}/data_aug_25-26-27"
-        # root = f"{radar_data_path}/data_aug_28-29-30-31"
-        # root = f"{radar_data_path}/data_sep_1-2-3-4-5-6-7"
-        # root = f"{radar_data_path}/data_sep_8-9-11-14"
-        # root = f"{radar_data_path}/data_sep_17-18-19-24"
-        path_list = glob.glob(os.path.join(root, '*.json'))
-    
-
-    # Multi target scenarios
-    elif import_selection == 2:
-        root = radar_data_path
-        txt_filename = f"{wokring_directory}/code/utilities/multi_target/multi_target_scenarios.txt"
-        path_list = util.find_files(root,txt_filename)
-        
-
-    # Merged measurements
-    elif import_selection == 3:
-        root = radar_data_path
-        txt_filename = f"{wokring_directory}/code/utilities/merged_measurements/merged_measurements.txt"
-        path_list = util.find_files(root,txt_filename)
-        
-
-    # Multi path scenarios
-    elif import_selection == 4:
-        root = radar_data_path
-        txt_filename = f"{wokring_directory}/code/utilities/multi_path/multi_path_scenarios.txt"
-        path_list = util.find_files(root,txt_filename)
-
-
-    # Single scenario
-    elif import_selection == 5:
-        root = radar_data_path
-        path_list = [f"{root}/data_sep_17-18-19-24/rosbag_2023-09-17-12-12-38.json"]
-    
-    # Empty list
-    else: 
-        path_list = []
-    
     plot_rectangle_map = False
     if plot_rectangle_map:
         util.plot_map_with_rectangles(wokring_directory)
 
     # Plot only map
-    util.plot_only_map(wokring_directory)
+    # util.plot_only_map(wokring_directory)
 
     # Counting the number of different scenarios
     number_of_multi_target_scenarios = 0
@@ -233,23 +223,14 @@ if __name__ == '__main__':
             # Calculate coherence factor 
             invalid_tracks = util.check_coherence_factor(manager.track_history,coherence_factor=0.75)
 
-            # unvalid_tracks = util.check_startionary_tracks(unvalid_tracks, manager.track_history)
-
             # Check speed of tracks
             invalid_tracks = util.check_invalid_tracks(invalid_tracks, manager.track_history)
 
-            # check for to short tracks
-            # unvalid_tracks = util.check_lenght_of_tracks(unvalid_tracks, track_lengths_dict)
-                    
-            # Print current tracks
-            #util.print_current_tracks(manager.track_history)
-
-
+            # Count the number of filtered out invalid tracks
             if i == 0:
                 util.count_filtered_out_invalid_tracks(wokring_directory,invalid_tracks, reset = True)
             else:
                 util.count_filtered_out_invalid_tracks(wokring_directory,invalid_tracks)
-
 
             # Remove unvalid tracks
             invalid_track_history = {}
@@ -258,13 +239,6 @@ if __name__ == '__main__':
                     invalid_track_history[track] = manager.track_history[track]
                     del manager.track_history[track]
             
-                # Print current tracks
-                #print("After removing unvalid tracks:")
-                #util.print_current_tracks(manager.track_history)
-
-            
-
-
             # Plot of the scenario
             if plot_statement:
                 # Check if the scenario should be plotted relative to the map
@@ -276,8 +250,6 @@ if __name__ == '__main__':
                     ax = plot.create(measurements, manager.track_history, invalid_track_history, timestamps)
 
 
-                
-                
             # Create video
             if video_statement and not relative_to_map:
                 inp = input("Do you want to create a video? (y/n): ")
@@ -291,50 +263,15 @@ if __name__ == '__main__':
             if counting_matrix:
                 count_matrix.check_start_and_stop(track_history=manager.track_history,filename=filename)
 
-            # Check for merged measurements
-            # Can not be used with relative_to_map and without filter_out_unvalid_tracks
-            # if check_for_merged_measurements and filter_out_unvalid_tracks and not relative_to_map:
-            #     measurement_dict, track_dict = merged_measurement.create_dict(wokring_directory, filename, manager.track_history)
-
-
-            #     if merged_measurement.merged_measurements(wokring_directory, filename, manager.track_history, ax, plot_scenarios=True, return_true_or_false=True):
-            #         number_of_merged_measurements_scenarios += 1
-            #         #txt_filename = "/home/aflaptop/Documents/radar_tracker/code/utilities/merged_measurements/merged_measurements.txt"
-            #         txt_filename = f"{wokring_directory}/code/utilities/merged_measurements/merged_measurements.txt"
-            #         util.write_filenames_to_txt(filename, txt_filename)
-            #         # plotting.plot_merged_measurements(filename, wokring_directory)
 
             # Check for multi-target scenarios
             # Can not be used with relative_to_map and without filter_out_unvalid_tracks
-            if check_for_multi_target_scenarios and filter_out_unvalid_tracks and not relative_to_map:
+            if check_for_multi_target_scenarios and filter_out_unvalid_tracks:
                 if multi_target_scenarios(manager.track_history):
                     number_of_multi_target_scenarios += 1
                     txt_filename = f"{wokring_directory}/code/utilities/multi_target/multi_target_scenarios.txt"
                     util.write_filenames_to_txt(filename, txt_filename)
                     
-                    # Move plot to the multi_target directory
-                    if False:
-                        move_plot_to_this_directory(wokring_directory, filename, dir_name)
-                
-                        
-
-            # Check for multi-path scenarios
-            # Can not be used with relative_to_map and without filter_out_unvalid_tracks
-            # if check_for_multi_path_scenarios and filter_out_unvalid_tracks and not relative_to_map:
-            #     merged_measurement.create_dict(wokring_directory, filename, manager.track_history)
-
-            #     # Need to pass the plot information the the function in the next step, if plot_statement is not true. 
-            #     if not plot_statement:
-            #         plot = None
-
-            #     if check_for_multi_path(wokring_directory, filename, plot, measurements, manager.track_history, timestamps, plot_statement):
-            #         number_of_multi_path_scenarios += 1
-            #         print("Multi path scenario found")
-            #         txt_filename = f"{wokring_directory}/code/utilities/multi_path/multi_path_scenarios.txt"
-            #         util.write_filenames_to_txt(filename, txt_filename)
-            
-
-
             # Count the duration of the tracks
             if count_and_plot_histogram_of_tracks_duration:
                 npy_file_1 = f"{wokring_directory}/code/npy_files/track_duration_1.npy"
@@ -344,8 +281,8 @@ if __name__ == '__main__':
                     combined_dict[key] = manager.track_history[key]
                 for key in invalid_track_history:
                     combined_dict[key] = invalid_track_history[key]
-                # print(combined_dict)
                 if i==0:
+                    print("Reset")
                     util.histogram_of_tracks_duration(npy_file_1, manager.track_history, reset=True)
                     util.histogram_of_tracks_duration(npy_file_2, combined_dict, reset=True)
                 else:
@@ -362,11 +299,6 @@ if __name__ == '__main__':
 
     if check_for_multi_target_scenarios:
         print(f"Number of multi-target scenarios: {number_of_multi_target_scenarios}\n")
-    # if check_for_merged_measurements:
-    #     print(f"Number of merged measurement scenarios: {number_of_merged_measurements_scenarios}\n")
-    # if check_for_multi_path_scenarios:
-    #     print(f"Number of multi-path scenarios: {number_of_multi_path_scenarios}\n")
-
 
     if counting_matrix:
         # Save unvalidated tracks

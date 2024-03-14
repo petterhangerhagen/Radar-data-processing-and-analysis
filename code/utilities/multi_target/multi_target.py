@@ -19,7 +19,7 @@ import re
 
 def multi_target_scenarios(track_history):
     threshold_distance = 20
-    n = 3 # scale of covariance matrix
+    n = 3 
 
     track_dict = create_dict(track_history)
     track_dict.pop("Info")
