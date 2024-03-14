@@ -89,6 +89,9 @@ def setup_manager():
     return track_manager
     
 if __name__ == '__main__':
+    # Make results directory
+    util.make_results_directory(wokring_directory)
+
     # make new directory with the current date to save results
     dir_name = util.make_new_directory(wokring_directory)
 
@@ -189,7 +192,7 @@ if __name__ == '__main__':
     for i,filename in enumerate(path_list):
         # If statement is used if not all of the imported data should be used
         # for example if only the first 10 files should be used, if i<10
-        if True:
+        if False:
             print(f'File number {i+1} of {len(path_list)}')
             print(f"Curent file: {os.path.basename(filename)}\n")
 

@@ -15,6 +15,13 @@ from shapely.geometry.point import Point
 from utilities.check_start_and_stop import RectangleA, RectangleB, RectangleC, RectangleD, RectangleE, RectangleF
 import plotting
 
+def make_results_directory(wokring_directory):
+    new_dir, base = os.path.split(wokring_directory)
+    new_dir = os.path.join(new_dir, "radar_tracking_results")
+    if not os.path.exists(new_dir):
+        os.mkdir(new_dir)
+        print(f"New directory = {new_dir} created")
+
 def find_files(root,txt_filename):
     """
     Finds the files in the root directory that are given in the txt file
