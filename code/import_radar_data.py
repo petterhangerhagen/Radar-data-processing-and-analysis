@@ -7,7 +7,6 @@ Description: This script is inspired form Audun Gullikstad Hem mulit-target trac
 It contains a function that reads radar data from a json file and returns the measurements, radar and timestamps. Where the radar position is always zero.
 """
 
-import scipy.io as io
 import numpy as np
 from tracking import constructs
 from parameters import measurement_params
