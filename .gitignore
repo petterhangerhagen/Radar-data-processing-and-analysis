@@ -1,4 +1,6 @@
 *.npy
+!/code/npy_files/occupancy_grid_without_dilating.npy
+!/code/npy_files/occupancy_grid.npy
 /radar_tracker_virtual_env/
 /code/__pycache__/
 code/utilities/__pycache__/
