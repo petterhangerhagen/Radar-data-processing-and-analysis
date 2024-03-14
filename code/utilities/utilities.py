@@ -86,7 +86,7 @@ def check_timegaps(timestamps):
     time_gap = np.mean(time_gaps)
     for k in range(len(time_gaps)):
         if  not (0.8*time_gap < time_gaps[k][0] < 1.2*time_gap):
-            print(f"Time gap are not consistent, time gap {time_gaps[k][0]:.2f} at index {k}")
+            print(f"Time gap are not consistent, time gap {time_gaps[k][0]} at index {k}")
 
 def check_invalid_tracks(unvalid_tracks, track_history):
     """
@@ -303,7 +303,18 @@ def histogram_of_tracks_duration(npy_file, track_history, reset=False):
             track_durations.append([track_time,0])
 
     for duration,stationary in track_durations:
+        if check_if_track_is_stationary(track):
+            track_durations.append([track_time,1])
+        else:
+            track_durations.append([track_time,0])
+
+    for duration,stationary in track_durations:
         if duration < 20:
+            if stationary:
+                tracks_duration_dict["0-20"][1] += 1
+            else:
+                tracks_duration_dict["0-20"][0] += 1
+
             if stationary:
                 tracks_duration_dict["0-20"][1] += 1
             else:
@@ -314,7 +325,15 @@ def histogram_of_tracks_duration(npy_file, track_history, reset=False):
                 tracks_duration_dict["20-40"][1] += 1
             else:
                 tracks_duration_dict["20-40"][0] += 1
+            if stationary:
+                tracks_duration_dict["20-40"][1] += 1
+            else:
+                tracks_duration_dict["20-40"][0] += 1
         elif 40 <= duration < 60:
+            if stationary:
+                tracks_duration_dict["40-60"][1] += 1
+            else:
+                tracks_duration_dict["40-60"][0] += 1
             if stationary:
                 tracks_duration_dict["40-60"][1] += 1
             else:
@@ -324,7 +343,15 @@ def histogram_of_tracks_duration(npy_file, track_history, reset=False):
                 tracks_duration_dict["60-80"][1] += 1
             else:
                 tracks_duration_dict["60-80"][0] += 1
+            if stationary:
+                tracks_duration_dict["60-80"][1] += 1
+            else:
+                tracks_duration_dict["60-80"][0] += 1
         elif 80 <= duration < 100:
+            if stationary:
+                tracks_duration_dict["80-100"][1] += 1
+            else:
+                tracks_duration_dict["80-100"][0] += 1
             if stationary:
                 tracks_duration_dict["80-100"][1] += 1
             else:
@@ -334,7 +361,15 @@ def histogram_of_tracks_duration(npy_file, track_history, reset=False):
                 tracks_duration_dict["100-120"][1] += 1
             else:
                 tracks_duration_dict["100-120"][0] += 1
+            if stationary:
+                tracks_duration_dict["100-120"][1] += 1
+            else:
+                tracks_duration_dict["100-120"][0] += 1
         elif 120 <= duration < 140:
+            if stationary:
+                tracks_duration_dict["120-140"][1] += 1
+            else:
+                tracks_duration_dict["120-140"][0] += 1
             if stationary:
                 tracks_duration_dict["120-140"][1] += 1
             else:
@@ -344,7 +379,15 @@ def histogram_of_tracks_duration(npy_file, track_history, reset=False):
                 tracks_duration_dict["140-160"][1] += 1
             else:
                 tracks_duration_dict["140-160"][0] += 1
+            if stationary:
+                tracks_duration_dict["140-160"][1] += 1
+            else:
+                tracks_duration_dict["140-160"][0] += 1
         elif 160 <= duration < 180:
+            if stationary:
+                tracks_duration_dict["160-180"][1] += 1
+            else:
+                tracks_duration_dict["160-180"][0] += 1
             if stationary:
                 tracks_duration_dict["160-180"][1] += 1
             else:
@@ -354,7 +397,15 @@ def histogram_of_tracks_duration(npy_file, track_history, reset=False):
                 tracks_duration_dict["180-200"][1] += 1
             else:
                 tracks_duration_dict["180-200"][0] += 1
+            if stationary:
+                tracks_duration_dict["180-200"][1] += 1
+            else:
+                tracks_duration_dict["180-200"][0] += 1
         else:
+            if stationary:
+                tracks_duration_dict[">200"][1] += 1
+            else:
+                tracks_duration_dict[">200"][0] += 1
             if stationary:
                 tracks_duration_dict[">200"][1] += 1
             else:
@@ -375,6 +426,10 @@ def plot_histogram_of_tracks_duration(npy_file, wokring_directory,num):
     # Get a list of colors for each bar
     #colors = plt.cm.viridis(np.linspace(0, 1, len(tracks_duration_dict)))
 
+    data1 = [value[0] for value in tracks_duration_dict.values()]
+    data2 = [value[1] for value in tracks_duration_dict.values()]
+    ax.bar(tracks_duration_dict.keys(), data1, color='#1f77b4', label='Moving tracks')
+    ax.bar(tracks_duration_dict.keys(), data2, color='#2ca02c',bottom=data1, label='Stationary tracks')
     data1 = [value[0] for value in tracks_duration_dict.values()]
     data2 = [value[1] for value in tracks_duration_dict.values()]
     ax.bar(tracks_duration_dict.keys(), data1, color='#1f77b4', label='Moving tracks')

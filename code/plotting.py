@@ -470,41 +470,41 @@ def plot_only_map_with_rectangles(wokring_directory, rectangles):
         ax.legend(handles=[first_image_patch, second_image_patch], loc='upper left', fontsize=12)
         
 
-    #N_min, N_max, E_min, E_max = find_track_limits(track_history)
-    ax.set_xlim(origin_x-120,origin_x + 120)
-    ax.set_ylim(origin_y-140, origin_y + 20)
-    ax.set_aspect('equal')
-    ax.set_xlabel('East [m]',fontsize=15)
-    ax.set_ylabel('North [m]',fontsize=15)
-    
 
-    # reformating the x and y axis
-    x_axis_list = np.arange(origin_x-120,origin_x+121,20)
-    x_axis_list_str = []
-    for x in x_axis_list:
-        x_axis_list_str.append(str(int(x-origin_x)))
-    plt.xticks(x_axis_list, x_axis_list_str)
+    if rectangles is not None:
+        #N_min, N_max, E_min, E_max = find_track_limits(track_history)
+        ax.set_xlim(origin_x-120,origin_x + 120)
+        ax.set_ylim(origin_y-140, origin_y + 20)
+        ax.set_aspect('equal')
+        ax.set_xlabel('East [m]',fontsize=15)
+        ax.set_ylabel('North [m]',fontsize=15)
+        
 
-    y_axis_list = np.arange(origin_y-140,origin_y+21,20)
-    y_axis_list_str = []
-    for y in y_axis_list:
-        y_axis_list_str.append(str(int(y-origin_y)))
-    plt.yticks(y_axis_list, y_axis_list_str)
-    plt.tick_params(axis='both', which='major', labelsize=15)
-    plt.tight_layout()
+        # reformating the x and y axis
+        x_axis_list = np.arange(origin_x-120,origin_x+121,20)
+        x_axis_list_str = []
+        for x in x_axis_list:
+            x_axis_list_str.append(str(int(x-origin_x)))
+        plt.xticks(x_axis_list, x_axis_list_str)
 
+        y_axis_list = np.arange(origin_y-140,origin_y+21,20)
+        y_axis_list_str = []
+        for y in y_axis_list:
+            y_axis_list_str.append(str(int(y-origin_y)))
+        plt.yticks(y_axis_list, y_axis_list_str)
+        plt.tick_params(axis='both', which='major', labelsize=15)
+        plt.tight_layout()
+        names = ["A","B","C","D","E","F"]
+        for rec, name in zip(rectangles, names):
 
-    names = ["A","B","C","D","E","F"]
-    for rec, name in zip(rectangles, names):
+            x = np.array([rec.bottom_left[0], rec.bottom_left[0], rec.top_right[0], rec.top_right[0]])
+            y = np.array([rec.bottom_left[1], rec.top_right[1], rec.top_right[1], rec.bottom_left[1]])
+            x = x + origin_x
+            y = y + origin_y
 
-        x = np.array([rec.bottom_left[0], rec.bottom_left[0], rec.top_right[0], rec.top_right[0]])
-        y = np.array([rec.bottom_left[1], rec.top_right[1], rec.top_right[1], rec.bottom_left[1]])
-        x = x + origin_x
-        y = y + origin_y
-
-        rectangle = Polygon(list(zip(x, y)))
-        ax.add_patch(PolygonPatch(rectangle, edgecolor = "#ff7f0e", facecolor = '#ff7f0e', alpha=0.3, linewidth=3.5))
-        ax.annotate(name, ((x[0] + x[2])/2 - 2, (y[0] + y[2])/2 - 2), fontsize=25, color='black')
+            rectangle = Polygon(list(zip(x, y)))
+            ax.add_patch(PolygonPatch(rectangle, edgecolor = "#ff7f0e", facecolor = '#ff7f0e', alpha=0.3, linewidth=3.5))
+            ax.annotate(name, ((x[0] + x[2])/2 - 2, (y[0] + y[2])/2 - 2), fontsize=25, color='black')
 
     save_name = f"{wokring_directory}/code/utilities/how_areas_are_defined_on_map.png"
     fig.savefig(save_name,dpi=400)

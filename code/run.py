@@ -187,9 +187,8 @@ if __name__ == '__main__':
     # Single scenario
     elif import_selection == 5:
         root = radar_data_path
-        path_list = [f"{radar_data_path}/data_aug_18-19/rosbag_2023-08-19-11-21-26.json",
-                     f"{radar_data_path}/data_aug_18-19/rosbag_2023-08-18-14-57-38.json"]
-
+        path_list = [f"{root}/data_sep_17-18-19-24/rosbag_2023-09-17-12-12-38.json"]
+    
     # Empty list
     else: 
         path_list = []
@@ -198,12 +197,15 @@ if __name__ == '__main__':
     if plot_rectangle_map:
         util.plot_map_with_rectangles(wokring_directory)
 
+    # Plot only map
+    util.plot_only_map(wokring_directory)
+
     # Counting the number of different scenarios
     number_of_multi_target_scenarios = 0
     for i,filename in enumerate(path_list):
         # If statement is used if not all of the imported data should be used
         # for example if only the first 10 files should be used, if i<10
-        if i<2:
+        if True:
             print(f'File number {i+1} of {len(path_list)}')
             print(f"Curent file: {os.path.basename(filename)}\n")
 
