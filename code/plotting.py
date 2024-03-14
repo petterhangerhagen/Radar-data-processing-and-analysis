@@ -12,7 +12,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 import warnings
-import json
 
 from matplotlib.cm import get_cmap
 from shapely.geometry.point import Point
@@ -44,9 +43,6 @@ class ScenarioPlot(object):
         self.filename = filename.split("/")[-1].split("_")[-1].split(".")[0]
         self.dir_name = dir_name
         
-        #self.ax1 = self.ax
-        
-
     def create(self, measurements, track_history, invalid_track_history, timestamps, ground_truth=None):
         self.fig, self.ax1 = plt.subplots(figsize=(11, 7.166666))
         #self.write_track_time_to_plot(track_history)
@@ -434,7 +430,6 @@ def plot_stationary_objects(invalid_track_history, ax, origin_x=0, origin_y=0):
         image_patch = None
     return image_patch
         
-
 def plot_only_map_with_rectangles(wokring_directory, rectangles):
     # Plotting the occupancy grid'
     data = np.load(f"{wokring_directory}/code/npy_files/occupancy_grid.npy",allow_pickle='TRUE').item()
@@ -469,17 +464,13 @@ def plot_only_map_with_rectangles(wokring_directory, rectangles):
         # Add legend
         ax.legend(handles=[first_image_patch, second_image_patch], loc='upper left', fontsize=12)
         
-
+    ax.set_xlim(origin_x-120,origin_x + 120)
+    ax.set_ylim(origin_y-140, origin_y + 20)
+    ax.set_aspect('equal')
+    ax.set_xlabel('East [m]',fontsize=15)
+    ax.set_ylabel('North [m]',fontsize=15)
 
     if rectangles is not None:
-        #N_min, N_max, E_min, E_max = find_track_limits(track_history)
-        ax.set_xlim(origin_x-120,origin_x + 120)
-        ax.set_ylim(origin_y-140, origin_y + 20)
-        ax.set_aspect('equal')
-        ax.set_xlabel('East [m]',fontsize=15)
-        ax.set_ylabel('North [m]',fontsize=15)
-        
-
         # reformating the x and y axis
         x_axis_list = np.arange(origin_x-120,origin_x+121,20)
         x_axis_list_str = []
@@ -506,7 +497,12 @@ def plot_only_map_with_rectangles(wokring_directory, rectangles):
             ax.add_patch(PolygonPatch(rectangle, edgecolor = "#ff7f0e", facecolor = '#ff7f0e', alpha=0.3, linewidth=3.5))
             ax.annotate(name, ((x[0] + x[2])/2 - 2, (y[0] + y[2])/2 - 2), fontsize=25, color='black')
 
-    save_name = f"{wokring_directory}/code/utilities/how_areas_are_defined_on_map.png"
-    fig.savefig(save_name,dpi=400)
-    print(f"Saving figure to {save_name}")
-    plt.close()
+        save_name = f"{wokring_directory}/code/utilities/how_areas_are_defined_on_map.png"
+        fig.savefig(save_name,dpi=400)
+        print(f"Saving figure to {save_name}")
+        plt.close()
+    else:
+        save_name = f"{wokring_directory}/code/utilities/only_map.png"
+        fig.savefig(save_name,dpi=400)
+        print(f"Saving figure to {save_name}")
+        plt.close()

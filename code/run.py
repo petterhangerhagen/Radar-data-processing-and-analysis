@@ -4,8 +4,8 @@ Author: Petter Hangerhagen and Audun Gullikstad Hem
 Email: petthang@stud.ntnu.no
 Date: February 27, 2024
 Description: This script is part of Audun Gullikstad Hem mulit-target tracker (https://doi.org/10.24433/CO.3351829.v1). It is used as foundation which the code is built on.
-This script is used to run the multi-target tracker, and to check for different scenarios, such as multi-target, merged measurements, and multi-path scenarios. 
-It also filters out unvalid tracks, based on coherence factor, speed, and duration.
+This script is used to run the multi-target tracker, and to check for multi-target scenarios.
+It also filters out invalid tracks, based on coherence factor, minimum number of states, average speed of tracks and jumping tracks.
 The script can also be used to create videos and plots of the scenarios.
 """
 
@@ -15,14 +15,10 @@ import video
 import numpy as np
 import os
 import glob
-import datetime
 import warnings
 
-# import utilities.merged_measurements.merged_measurement as merged_measurement
-from utilities.multi_target.multi_target import multi_target_scenarios, move_plot_to_this_directory
-# from utilities.multi_path.multi_path import check_for_multi_path
+from utilities.multi_target.multi_target import multi_target_scenarios
 from utilities.check_start_and_stop import CountMatrix
-from utilities.check_start_and_stop import RectangleA, RectangleB, RectangleC, RectangleD, RectangleE, RectangleF
 import utilities.utilities as util
 
 from parameters import tracker_params, measurement_params, process_params, tracker_state
@@ -108,20 +104,16 @@ if __name__ == '__main__':
     video_statement: If True, the code will create a video of the scenario. This is useful for debugging and for visualizing the resutls.
     filter_out_unvalid_tracks: If True, the code will filter out unvalid tracks. This includes tracks with low coherence factor, low speed, and short duration.
     check_for_multi_target_scenarios: If True, the code will check for multi target scenarios. The scenarios will be saved in a txt file in the utilities/multi_target directory. 
-    check_for_merged_measurements: If True, the code will check for merged measurements. The scenarios will be saved in a txt file in the utilities/merged_measurements directory.
-    check_for_multi_path_scenarios: If True, the code will check for multi path scenarios. The scenarios will be saved in a txt file in the utilities/multi_path directory.
     count_and_plot_histogram_of_tracks_duration: If True, the code will count the duration of the tracks, and plot a histogram of the duration.
     counting_matrix: If True, the code will create a counting matrix, which defines the traffic matrix. The defined areas can be seen in the code/utilities/how_areas_are_defined_on_map.jpg. The matrix will be saved in the code/npy_files directory.
     reset_count_matrix: If True, the code will reset the counting matrix. This is useful if you want to start from scratch.
     """
     # 1: True, 0: False
-    plot_statement = 0
-    relative_to_map = 0
+    plot_statement = 1
+    relative_to_map = 1
     video_statement = 0
     filter_out_unvalid_tracks = 1
     check_for_multi_target_scenarios = 0
-    # check_for_merged_measurements = 0
-    # check_for_multi_path_scenarios = 0
     count_and_plot_histogram_of_tracks_duration = 0
     counting_matrix = 0
     reset_count_matrix = 0
@@ -135,10 +127,8 @@ if __name__ == '__main__':
     The import_selection variable is used to import different data. The different options are:
     0: All data
     1: Specific data, for example only one of the sets of data.
-    2: Multi target scenarios, this will import the data from the multi_target_scenarios.txt file.
-    3: Merged measurements, this will import the data from the merged_measurements.txt file.
-    4: Multi path scenarios, this will import the data from the multi_path_scenarios.txt file.
-    5: Single scenario, hardcode the path to the scenario you want to import.
+    2: Multi-target scenarios, this will import the data from the multi_target_scenarios.txt file.
+    3: Single scenario, hardcode the path to the scenario you want to import.
     """
   
 
@@ -183,12 +173,16 @@ if __name__ == '__main__':
     import_selection = 3
     path_list = scenario_selector(import_selection)
     ###################
+
+    # Plot map with rectangles
     plot_rectangle_map = False
     if plot_rectangle_map:
         util.plot_map_with_rectangles(wokring_directory)
 
     # Plot only map
-    # util.plot_only_map(wokring_directory)
+    plot_only_map = False
+    if plot_only_map:
+        util.plot_only_map(wokring_directory)
 
     # Counting the number of different scenarios
     number_of_multi_target_scenarios = 0
@@ -288,7 +282,8 @@ if __name__ == '__main__':
                 else:
                     util.histogram_of_tracks_duration(npy_file_1, manager.track_history, reset=False)
                     util.histogram_of_tracks_duration(npy_file_2, combined_dict, reset=False)
-                
+    # End of for loop
+                          
     # Plot histogram of tracks duration
     if count_and_plot_histogram_of_tracks_duration:
         npy_file_1 = f"{wokring_directory}/code/npy_files/track_duration_1.npy"

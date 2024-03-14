@@ -193,8 +193,6 @@ def check_invalid_tracks(unvalid_tracks, track_history):
 
     return unvalid_tracks
 
-
-
 def check_coherence_factor(track_history,coherence_factor=0.75):
     """
     Checks the coherence factor of the tracks, and adds the tracks with a coherence factor less than the given value to the list of unvalid tracks
@@ -382,3 +380,5 @@ def plot_map_with_rectangles(wokring_directory):
     rectangles = [rectangleA,rectangleB,rectangleC,rectangleD,rectangleE,rectangleF] 
     plotting.plot_only_map_with_rectangles(wokring_directory, rectangles)
 
+def plot_only_map(wokring_directory):
+    plotting.plot_only_map_with_rectangles(wokring_directory,rectangles=None)
