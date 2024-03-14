@@ -111,7 +111,7 @@ class ScenarioPlot(object):
         display_true_land = True
         if display_true_land:
             # Load and display the second occupancy grid
-            data2 = np.load("/home/aflaptop/Documents/radar_tracker/code/npy_files/occupancy_grid_without_dilating.npy", allow_pickle=True).item()
+            data2 = np.load(f"{self.wokring_directory}/code/npy_files/occupancy_grid_without_dilating.npy", allow_pickle=True).item()
             occupancy_grid2 = data2["occupancy_grid"]
             
             # Second imshow with alpha for overlap effect
